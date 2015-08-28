@@ -40,6 +40,9 @@ if os.path.isdir("./.git"):
 else:
     COMMIT_ID = "-" + "NonGit"
 
+# Check if OS is Windows.
+IS_WINDOWS = hasattr(sys, 'getwindowsversion')
+
 # Git URL.
 GIT_URL = "https://github.com/stasinopoulos/" + APPLICATION + ".git"
 
@@ -212,6 +215,12 @@ CHARSET_LIST = [
         "windows-1257",
         "windows-1258",
         "windows-874",
+]
+
+SERVER_BANNERS = [
+    "Microsoft-IIS",
+    "Apache",
+    "Nginx"
 ]
 
 #eof
