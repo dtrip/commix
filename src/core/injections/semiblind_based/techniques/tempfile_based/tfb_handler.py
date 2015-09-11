@@ -257,7 +257,7 @@ def tfb_injection_handler(url, delay, filename, tmp_path, http_request_method, u
               while True:
                 if go_back == True:
                   break
-                gotshell = raw_input("\n(?) Do you want a Pseudo-Terminal shell? [Y/n] > ").lower()
+                gotshell = raw_input("\n(?) Do you want a Pseudo-Terminal shell? [Y/n/q] > ").lower()
                 if gotshell in settings.CHOISE_YES:
                   print ""
                   print "Pseudo-Terminal (type '?' for shell options)"
@@ -269,7 +269,6 @@ def tfb_injection_handler(url, delay, filename, tmp_path, http_request_method, u
                           menu.shell_options()
                           continue
                         elif cmd.lower() == "quit":
-                          logs.logs_notification(filename)
                           sys.exit(0)
                         elif cmd.lower() == "back":
                           go_back = True
@@ -298,7 +297,10 @@ def tfb_injection_handler(url, delay, filename, tmp_path, http_request_method, u
                     sys.stdout.write("\r(*) Continue testing the "+ technique +"... ")
                     sys.stdout.flush()
                   break
-                
+
+                elif gotshell in settings.CHOISE_QUIT:
+                  sys.exit(0)
+
                 else:
                   if gotshell == "":
                     gotshell = "enter"

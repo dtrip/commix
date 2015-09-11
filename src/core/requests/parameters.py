@@ -25,18 +25,22 @@ from src.thirdparty.colorama import Fore, Back, Style, init
 # --------------------------------------------------------------
 def do_GET_check(url):
 
+  # Check for REST-ful URLs format. 
+  if "?" not in url:
+    if settings.INJECT_TAG not in url:
+      print "\n" + Back.RED + "(x) Error: You must set the \"INJECT_HERE\" tag to specify the testable parameter." + Style.RESET_ALL + "\n"
+      os._exit(0)
+    return url
+
   # Find the host part
   url_part = url.split("?")[0]
-
   # Find the parameter part
   parameters = url.split("?")[1]
-
   # Split parameters
   multi_parameters = parameters.split(settings.PARAMETER_DELIMITER)
 
   # Check if single paramerter is supplied.
   if len(multi_parameters) == 1:
-
     # Check if defined the INJECT_TAG
     if settings.INJECT_TAG not in parameters:
 
@@ -98,7 +102,13 @@ def do_GET_check(url):
 def vuln_GET_param(url):
 
   # Define the vulnerable parameter
-  if re.findall(r"" + settings.PARAMETER_DELIMITER + "(.*)=" + settings.INJECT_TAG + "", url):
+  if "?" not in url:
+      #Grab the value of parameter.
+      value = re.findall(r'/(.*)/' + settings.INJECT_TAG + "", url)
+      value = ''.join(value)
+      vuln_parameter = re.sub(r"/(.*)/", "", value)
+
+  elif re.findall(r"" + settings.PARAMETER_DELIMITER + "(.*)=" + settings.INJECT_TAG + "", url):
     vuln_parameter = re.findall(r"" + settings.PARAMETER_DELIMITER + "(.*)=" + settings.INJECT_TAG + "", url)
     vuln_parameter = ''.join(vuln_parameter)
     vuln_parameter = re.sub(r"(.*)=(.*)" + settings.PARAMETER_DELIMITER, "", vuln_parameter)
@@ -113,7 +123,6 @@ def vuln_GET_param(url):
 
   # Check if only one parameter supplied but, not defined the INJECT_TAG.
   elif settings.INJECT_TAG not in url:
-
       #Grab the value of parameter.
       value = re.findall(r'\?(.*)=', url)
       value = ''.join(value)
