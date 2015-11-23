@@ -94,6 +94,7 @@ TMP_PATH = "/tmp/"
 
 # Default Server's Root Directory
 SRV_ROOT_DIR = ""
+CUSTOM_SRV_ROOT_DIR = False
 
 # The max help option length.
 MAX_OPTION_LENGTH = 18
@@ -188,7 +189,13 @@ REFERER_INJECTION = False
 VALID_URL_FORMAT = "https?://(?:www)?(?:[\w-]{2,255}(?:\.\w{2,6}){1,2})(?:/[\w&%?#-]{1,300})?"
 
 # Accepted shell menu options
-SHELL_OPTIONS = ['?','quit','back']
+SHELL_OPTIONS = [
+        '?',
+        'quit',
+        'back',
+        'os_shell',
+        'reverse_tcp'
+]
 
 # Cookie delimiter
 COOKIE_DELIMITER = ";"
@@ -254,5 +261,8 @@ JSON_SYMBOLS = set("{}:'")
 
 # TFB Decimal
 TFB_DECIMAL = False
+
+# Ignore Error Message
+IGNORE_ERR_MSG = False
 
 #eof
