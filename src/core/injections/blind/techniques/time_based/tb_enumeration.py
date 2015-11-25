@@ -2,16 +2,16 @@
 # encoding: UTF-8
 
 """
- This file is part of commix (@commixproject) tool.
- Copyright (c) 2015 Anastasios Stasinopoulos (@ancst).
- https://github.com/stasinopoulos/commix
+This file is part of commix (@commixproject) tool.
+Copyright (c) 2015 Anastasios Stasinopoulos (@ancst).
+https://github.com/stasinopoulos/commix
 
- This program is free software: you can redistribute it and/or modify
- it under the terms of the GNU General Public License as published by
- the Free Software Foundation, either version 3 of the License, or
- (at your option) any later version.
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
  
- For more see the file 'readme/COPYING' for copying permission.
+For more see the file 'readme/COPYING' for copying permission.
 """
 
 import sys
@@ -24,9 +24,8 @@ from src.thirdparty.colorama import Fore, Back, Style, init
 from src.core.injections.blind.techniques.time_based import tb_injector
 
 """
- The "time-based" injection technique on Blind OS Command Injection.
+The "time-based" injection technique on Blind OS Command Injection.
 """
-
       
 """
 Hostname enumeration
@@ -98,18 +97,18 @@ def current_user(separator, maxlen, TAG, prefix, suffix, delay, http_request_met
         output_file.write("    (!) The current user is " + cu_account)
         output_file.close()
         if is_root != "0":
-            sys.stdout.write(Style.BRIGHT + " and it is " + Style.UNDERLINE + "not" + Style.RESET_ALL + Style.BRIGHT + " privilleged" + Style.RESET_ALL + ".\n\n")
+            sys.stdout.write(Style.BRIGHT + " and it is " + Style.UNDERLINE + "not" + Style.RESET_ALL + Style.BRIGHT + " privileged" + Style.RESET_ALL + ".\n\n")
             sys.stdout.flush()
             # Add infos to logs file.   
             output_file = open(filename, "a")
-            output_file.write(" and it is not privilleged.\n")
+            output_file.write(" and it is not privileged.\n")
             output_file.close()
         else:
-          sys.stdout.write(Style.BRIGHT + " and it is " + Style.UNDERLINE + "" + Style.RESET_ALL + Style.BRIGHT + " privilleged" + Style.RESET_ALL + ".\n\n")
+          sys.stdout.write(Style.BRIGHT + " and it is " + Style.UNDERLINE + "" + Style.RESET_ALL + Style.BRIGHT + " privileged" + Style.RESET_ALL + ".\n\n")
           sys.stdout.flush()
           # Add infos to logs file.   
           output_file = open(filename, "a")
-          output_file.write(" and it is privilleged.\n")
+          output_file.write(" and it is privileged.\n")
           output_file.close()
     else:
       sys.stdout.write(Style.BRIGHT + "\n  (!) The current user is " + Style.UNDERLINE + cu_account + Style.RESET_ALL + ".\n\n")
@@ -117,8 +116,8 @@ def current_user(separator, maxlen, TAG, prefix, suffix, delay, http_request_met
       # Add infos to logs file.   
       output_file = open(filename, "a")
       output_file.write("    (!) The current user is " + cu_account + "\n")
-      output_file.close()   
-
+      output_file.close() 
+        
 """
 System users enumeration
 """
@@ -167,31 +166,31 @@ def system_users(separator, maxlen, TAG, prefix, suffix, delay, http_request_met
               raise ValueError()
             if menu.options.privileges:
               if int(fields[1]) == 0:
-                is_privilleged = Style.RESET_ALL + " is" +  Style.BRIGHT + " root user "
-                is_privilleged_nh = " is root user "
+                is_privileged = Style.RESET_ALL + " is" +  Style.BRIGHT + " root user "
+                is_privileged_nh = " is root user "
               elif int(fields[1]) > 0 and int(fields[1]) < 99 :
-                is_privilleged = Style.RESET_ALL + " is" +  Style.BRIGHT + " system user "
-                is_privilleged_nh = " is system user "
+                is_privileged = Style.RESET_ALL + " is" +  Style.BRIGHT + " system user "
+                is_privileged_nh = " is system user "
               elif int(fields[1]) >= 99 and int(fields[1]) < 65534 :
                 if int(fields[1]) == 99 or int(fields[1]) == 60001 or int(fields[1]) == 65534:
-                  is_privilleged = Style.RESET_ALL + " is" +  Style.BRIGHT + " anonymous user "
-                  is_privilleged_nh = " is anonymous user "
+                  is_privileged = Style.RESET_ALL + " is" +  Style.BRIGHT + " anonymous user "
+                  is_privileged_nh = " is anonymous user "
                 elif int(fields[1]) == 60002:
-                  is_privilleged = Style.RESET_ALL + " is" +  Style.BRIGHT + " non-trusted user "
-                  is_privilleged_nh = " is non-trusted user "   
+                  is_privileged = Style.RESET_ALL + " is" +  Style.BRIGHT + " non-trusted user "
+                  is_privileged_nh = " is non-trusted user "   
                 else:
-                  is_privilleged = Style.RESET_ALL + " is" +  Style.BRIGHT + " regular user "
-                  is_privilleged_nh = " is regular user "
+                  is_privileged = Style.RESET_ALL + " is" +  Style.BRIGHT + " regular user "
+                  is_privileged_nh = " is regular user "
               else :
-                is_privilleged = ""
-                is_privilleged_nh = ""
+                is_privileged = ""
+                is_privileged_nh = ""
             else :
-              is_privilleged = ""
-              is_privilleged_nh = ""
-            print "  ("+str(count)+") '" + Style.BRIGHT + Style.UNDERLINE + fields[0]+ Style.RESET_ALL + "'" + Style.BRIGHT + is_privilleged + Style.RESET_ALL + "(uid=" + fields[1] + "). Home directory is in '" + Style.BRIGHT + fields[2]+ Style.RESET_ALL + "'." 
+              is_privileged = ""
+              is_privileged_nh = ""
+            print "  ("+str(count)+") '" + Style.BRIGHT + Style.UNDERLINE + fields[0]+ Style.RESET_ALL + "'" + Style.BRIGHT + is_privileged + Style.RESET_ALL + "(uid=" + fields[1] + "). Home directory is in '" + Style.BRIGHT + fields[2]+ Style.RESET_ALL + "'." 
             # Add infos to logs file.   
             output_file = open(filename, "a")
-            output_file.write("      ("+str(count)+") '" + fields[0]+ "'" + is_privilleged_nh + "(uid=" + fields[1] + "). Home directory is in '" + fields[2] + "'.\n" )
+            output_file.write("      ("+str(count)+") '" + fields[0]+ "'" + is_privileged_nh + "(uid=" + fields[1] + "). Home directory is in '" + fields[2] + "'.\n" )
             output_file.close()
           except ValueError:
             if count == 1 :
@@ -204,7 +203,6 @@ def system_users(separator, maxlen, TAG, prefix, suffix, delay, http_request_met
       print ""
   else:
     print Fore.YELLOW + "(^) Warning: It seems that you don't have permissions to read '" + settings.PASSWD_FILE + "' to enumerate users entries." + Style.RESET_ALL + "\n" 
-
 
 """
 System passwords enumeration
@@ -250,7 +248,6 @@ def system_passwords(separator, maxlen, TAG, prefix, suffix, delay, http_request
   else:
     print Fore.YELLOW + "(^) Warning: It seems that you don't have permissions to read '" + settings.SHADOW_FILE + "' to enumerate users password hashes." + Style.RESET_ALL + "\n"
 
-
 """
 Single os-shell execution
 """
@@ -258,7 +255,6 @@ def single_os_cmd_exec(separator, maxlen, TAG, prefix, suffix, delay, http_reque
   cmd = menu.options.os_cmd
   check_how_long, output = tb_injector.injection(separator, maxlen, TAG, cmd, prefix, suffix, delay, http_request_method, url, vuln_parameter, alter_shell, filename)
   return check_how_long, output
-
 
 """
 Check the defined options

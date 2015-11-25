@@ -2,16 +2,16 @@
 # encoding: UTF-8
 
 """
- This file is part of commix (@commixproject) tool.
- Copyright (c) 2015 Anastasios Stasinopoulos (@ancst).
- https://github.com/stasinopoulos/commix
+This file is part of commix (@commixproject) tool.
+Copyright (c) 2015 Anastasios Stasinopoulos (@ancst).
+https://github.com/stasinopoulos/commix
 
- This program is free software: you can redistribute it and/or modify
- it under the terms of the GNU General Public License as published by
- the Free Software Foundation, either version 3 of the License, or
- (at your option) any later version.
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
  
- For more see the file 'readme/COPYING' for copying permission.
+For more see the file 'readme/COPYING' for copying permission.
 """
 
 import sys
@@ -26,9 +26,8 @@ from src.core.injections.semiblind.techniques.file_based import fb_injector
 The "file-based" technique on Semiblind OS Command Injection.
 """
 
-
 """
- Hostname enumeration
+Hostname enumeration
 """
 def hostname(separator, payload, TAG, delay, prefix, suffix, http_request_method, url, vuln_parameter, OUTPUT_TEXTFILE, alter_shell, filename):
   cmd = settings.HOSTNAME
@@ -46,7 +45,6 @@ def hostname(separator, payload, TAG, delay, prefix, suffix, http_request_method
     output_file = open(filename, "a")
     output_file.write("    (!) The hostname is " + shell + ".\n")
     output_file.close()
-
 
 """
 Retrieve system information
@@ -85,7 +83,6 @@ def system_information(separator, payload, TAG, delay, prefix, suffix, http_requ
       output_file.write("    (!) The target operating system is " + target_os + ".\n")
       output_file.close()
 
-
 """
 The current user enumeration
 """
@@ -110,18 +107,18 @@ def current_user(separator, payload, TAG, delay, prefix, suffix, http_request_me
         output_file.write("    (!) The current user is " + cu_account)
         output_file.close()
         if shell != "0":
-            sys.stdout.write(Style.BRIGHT + " and it is " + Style.UNDERLINE + "not" + Style.RESET_ALL + Style.BRIGHT + " privilleged" + Style.RESET_ALL + ".\n")
+            sys.stdout.write(Style.BRIGHT + " and it is " + Style.UNDERLINE + "not" + Style.RESET_ALL + Style.BRIGHT + " privileged" + Style.RESET_ALL + ".\n")
             sys.stdout.flush()
             # Add infos to logs file.   
             output_file = open(filename, "a")
-            output_file.write(" and it is not privilleged.\n")
+            output_file.write(" and it is not privileged.\n")
             output_file.close()
         else:
-          sys.stdout.write(Style.BRIGHT + " and it is " + Style.UNDERLINE + "" + Style.RESET_ALL + Style.BRIGHT + " privilleged" + Style.RESET_ALL + ".\n")
+          sys.stdout.write(Style.BRIGHT + " and it is " + Style.UNDERLINE + "" + Style.RESET_ALL + Style.BRIGHT + " privileged" + Style.RESET_ALL + ".\n")
           sys.stdout.flush()
           # Add infos to logs file.   
           output_file = open(filename, "a")
-          output_file.write(" and it is privilleged.\n")
+          output_file.write(" and it is privileged.\n")
           output_file.close()
     else:
       if menu.options.verbose:
@@ -133,7 +130,6 @@ def current_user(separator, payload, TAG, delay, prefix, suffix, http_request_me
       output_file.write("    (!) The current user is " + cu_account + "\n")
       output_file.close()
         
-
 """
 System users enumeration
 """
@@ -186,31 +182,31 @@ def system_users(separator, payload, TAG, delay, prefix, suffix, http_request_me
               raise ValueError()
             if menu.options.privileges:
               if int(fields[1]) == 0:
-                is_privilleged = Style.RESET_ALL + " is" +  Style.BRIGHT + " root user "
-                is_privilleged_nh = " is root user "
+                is_privileged = Style.RESET_ALL + " is" +  Style.BRIGHT + " root user "
+                is_privileged_nh = " is root user "
               elif int(fields[1]) > 0 and int(fields[1]) < 99 :
-                is_privilleged = Style.RESET_ALL + " is" +  Style.BRIGHT + " system user "
-                is_privilleged_nh = " is system user "
+                is_privileged = Style.RESET_ALL + " is" +  Style.BRIGHT + " system user "
+                is_privileged_nh = " is system user "
               elif int(fields[1]) >= 99 and int(fields[1]) < 65534 :
                 if int(fields[1]) == 99 or int(fields[1]) == 60001 or int(fields[1]) == 65534:
-                  is_privilleged = Style.RESET_ALL + " is" +  Style.BRIGHT + " anonymous user "
-                  is_privilleged_nh = " is anonymous user "
+                  is_privileged = Style.RESET_ALL + " is" +  Style.BRIGHT + " anonymous user "
+                  is_privileged_nh = " is anonymous user "
                 elif int(fields[1]) == 60002:
-                  is_privilleged = Style.RESET_ALL + " is" +  Style.BRIGHT + " non-trusted user "
-                  is_privilleged_nh = " is non-trusted user "   
+                  is_privileged = Style.RESET_ALL + " is" +  Style.BRIGHT + " non-trusted user "
+                  is_privileged_nh = " is non-trusted user "   
                 else:
-                  is_privilleged = Style.RESET_ALL + " is" +  Style.BRIGHT + " regular user "
-                  is_privilleged_nh = " is regular user "
+                  is_privileged = Style.RESET_ALL + " is" +  Style.BRIGHT + " regular user "
+                  is_privileged_nh = " is regular user "
               else :
-                is_privilleged = ""
-                is_privilleged_nh = ""
+                is_privileged = ""
+                is_privileged_nh = ""
             else :
-              is_privilleged = ""
-              is_privilleged_nh = ""
-            print "  ("+str(count)+") '" + Style.BRIGHT + Style.UNDERLINE + fields[0]+ Style.RESET_ALL + "'" + Style.BRIGHT + is_privilleged + Style.RESET_ALL + "(uid=" + fields[1] + "). Home directory is in '" + Style.BRIGHT + fields[2]+ Style.RESET_ALL + "'." 
+              is_privileged = ""
+              is_privileged_nh = ""
+            print "  ("+str(count)+") '" + Style.BRIGHT + Style.UNDERLINE + fields[0]+ Style.RESET_ALL + "'" + Style.BRIGHT + is_privileged + Style.RESET_ALL + "(uid=" + fields[1] + "). Home directory is in '" + Style.BRIGHT + fields[2]+ Style.RESET_ALL + "'." 
             # Add infos to logs file.   
             output_file = open(filename, "a")
-            output_file.write("      ("+str(count)+") '" + fields[0]+ "'" + is_privilleged_nh + "(uid=" + fields[1] + "). Home directory is in '" + fields[2] + "'.\n" )
+            output_file.write("      ("+str(count)+") '" + fields[0]+ "'" + is_privileged_nh + "(uid=" + fields[1] + "). Home directory is in '" + fields[2] + "'.\n" )
             output_file.close()
           except ValueError:
             if count == 1 :
@@ -225,7 +221,6 @@ def system_users(separator, payload, TAG, delay, prefix, suffix, http_request_me
     sys.stdout.flush()
     print "\n" + Fore.YELLOW + "(^) Warning: It seems that you don't have permissions to read '" + settings.PASSWD_FILE + "' to enumerate users entries." + Style.RESET_ALL   
  
-
 """
 System passwords enumeration
 """
@@ -271,7 +266,6 @@ def system_passwords(separator, payload, TAG, delay, prefix, suffix, http_reques
       sys.stdout.flush()
       print "\n" + Fore.YELLOW + "(^) Warning: It seems that you don't have permissions to read '" + settings.SHADOW_FILE + "' to enumerate users password hashes." + Style.RESET_ALL
       
-
 """
 Single os-shell execution
 """
@@ -288,7 +282,6 @@ def single_os_cmd_exec(separator, payload, TAG, delay, prefix, suffix, http_requ
     else:
       print Back.RED + "(x) Error: The '" + cmd + "' command, does not return any output." + Style.RESET_ALL
   sys.exit(0)
-
 
 """
 Check the defined options
