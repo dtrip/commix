@@ -22,6 +22,7 @@ import random
 import base64
 import urllib
 import urllib2
+import readline
 
 from src.utils import menu
 from src.utils import logs
@@ -280,12 +281,18 @@ def eb_injection_handler(url, delay, filename, http_request_method):
               print "Pseudo-Terminal (type '" + Style.BRIGHT + "?" + Style.RESET_ALL + "' for available options)"
               while True:
                 try:
+                  # Tab compliter
+                  readline.set_completer(menu.tab_completer)
+                  readline.parse_and_bind("tab: complete")
                   cmd = raw_input("""commix(""" + Style.BRIGHT + Fore.RED + """os_shell""" + Style.RESET_ALL + """) > """)
                   cmd = checks.escaped_cmd(cmd)
                   if cmd.lower() in settings.SHELL_OPTIONS:
                     os_shell_option = checks.check_os_shell_options(cmd.lower(), technique, go_back, no_result) 
                     if os_shell_option == False:
-                      return False
+                      if no_result == True:
+                        return False
+                      else:
+                        return True
                     elif os_shell_option == "quit":                    
                       sys.exit(0)
                     elif os_shell_option == "back":

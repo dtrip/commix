@@ -23,7 +23,8 @@ import random
 import base64
 import urllib
 import urllib2
-  
+import readline
+
 from src.utils import menu
 from src.utils import logs
 from src.utils import settings
@@ -164,21 +165,24 @@ def tfb_injection_handler(url, delay, filename, tmp_path, http_request_method, u
                   randv2 = random.randrange(1, 2)
                   randvcalc = randv1 + randv2
                   cmd = "echo $((" + str(randv1) + "+" + str(randv2) + "))"
+                  
                   # Check for false positive resutls
                   how_long, output = tfb_injector.false_positive_check(separator, TAG, cmd, prefix, suffix, delay, http_request_method, url, vuln_parameter, OUTPUT_TEXTFILE, randvcalc, alter_shell, how_long)
                 
-                if str(tmp_how_long) == str(how_long) and \
-                   str(output) == str(randvcalc) and \
-                   len(TAG) == output_length:
-                   
-                  is_vulnerable = True
-                  if not menu.options.verbose:
-                    percent = Fore.GREEN + "SUCCEED" + Style.RESET_ALL
+                  if str(tmp_how_long) == str(how_long) and \
+                     str(output) == str(randvcalc) and \
+                     len(TAG) == output_length:
+                     
+                    is_vulnerable = True
+                    if not menu.options.verbose:
+                      percent = Fore.GREEN + "SUCCEED" + Style.RESET_ALL
+                    else:
+                      percent = ""
                   else:
-                    percent = ""
+                    break
+                # False positive
                 else:
-                  break
-                    
+                  continue     
               else:
                 percent = str(float_percent)+"%"
                 
@@ -337,12 +341,18 @@ def tfb_injection_handler(url, delay, filename, tmp_path, http_request_method, u
                     print "Pseudo-Terminal (type '" + Style.BRIGHT + "?" + Style.RESET_ALL + "' for available options)"
                     while True:
                       try:
+                        # Tab compliter
+                        readline.set_completer(menu.tab_completer)
+                        readline.parse_and_bind("tab: complete")
                         cmd = raw_input("""commix(""" + Style.BRIGHT + Fore.RED + """os_shell""" + Style.RESET_ALL + """) > """)
                         cmd = checks.escaped_cmd(cmd)
                         if cmd.lower() in settings.SHELL_OPTIONS:
                           os_shell_option = checks.check_os_shell_options(cmd.lower(), technique, go_back, no_result) 
                           if os_shell_option == False:
-                            return False
+                            if no_result == True:
+                              return False
+                            else:
+                              return True
                           elif os_shell_option == "quit":  
                             # Delete previous shell (text) files (output) from /tmp
                             delete_previous_shell(separator, payload, TAG, cmd, prefix, suffix, http_request_method, url, vuln_parameter, OUTPUT_TEXTFILE, alter_shell, filename)                          

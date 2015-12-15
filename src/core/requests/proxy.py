@@ -28,10 +28,14 @@ from src.core.requests import headers
 """
 def do_check(url):
   check_proxy = True
-  sys.stdout.write("(*) Testing proxy " + menu.options.proxy + " ... ")
+  sys.stdout.write("(*) Testing proxy " + menu.options.proxy + "... ")
   sys.stdout.flush()
   try:
-    request = urllib2.Request(url)
+    # Check if defined POST data
+    if menu.options.data:
+      request = urllib2.Request(url, menu.options.data)
+    else:
+      request = urllib2.Request(url)
     # Check if defined extra headers.
     headers.do_check(request)
     request.set_proxy(menu.options.proxy,settings.PROXY_PROTOCOL)
@@ -46,7 +50,7 @@ def do_check(url):
     sys.stdout.write("[" + Fore.GREEN + "  SUCCEED " + Style.RESET_ALL + " ]\n")
     sys.stdout.flush()
   else:
-    print "[" + Fore.RED + " FAILED " + Style.RESET_ALL + " ]\n"
+    print "[" + Fore.RED + " FAILED " + Style.RESET_ALL + "]"
     print Back.RED + "(x) Error: Could not connect to proxy." + Style.RESET_ALL
     sys.exit(0)
     

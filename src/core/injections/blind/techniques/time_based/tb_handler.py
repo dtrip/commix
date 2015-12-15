@@ -22,6 +22,7 @@ import random
 import base64
 import urllib
 import urllib2
+import readline
 
 from src.utils import menu
 from src.utils import logs
@@ -161,18 +162,20 @@ def tb_injection_handler(url, delay, filename, http_request_method, url_time_res
                   # Check for false positive resutls
                   how_long, output = tb_injector.false_positive_check(separator, TAG, cmd, prefix, suffix, delay, http_request_method, url, vuln_parameter, randvcalc, alter_shell, how_long)
                   
-                if str(tmp_how_long) == str(how_long) and \
-                   str(output) == str(randvcalc) and \
-                   len(TAG) == output_length:
+                  if str(tmp_how_long) == str(how_long) and \
+                     str(output) == str(randvcalc) and \
+                     len(TAG) == output_length:
 
-                  is_vulnerable = True
-                  if not menu.options.verbose:
-                    percent = Fore.GREEN + "SUCCEED" + Style.RESET_ALL
+                    is_vulnerable = True
+                    if not menu.options.verbose:
+                      percent = Fore.GREEN + "SUCCEED" + Style.RESET_ALL
+                    else:
+                      percent = ""
                   else:
-                    percent = ""
+                    break
+                # False positive
                 else:
-                  break
-                  
+                  continue
               else:
                 percent = str(float_percent)+"%"
                 
@@ -295,12 +298,18 @@ def tb_injection_handler(url, delay, filename, http_request_method, url_time_res
                   print "Pseudo-Terminal (type '" + Style.BRIGHT + "?" + Style.RESET_ALL + "' for available options)"
                   while True:
                     try:
+                      # Tab compliter
+                      readline.set_completer(menu.tab_completer)
+                      readline.parse_and_bind("tab: complete")
                       cmd = raw_input("""commix(""" + Style.BRIGHT + Fore.RED + """os_shell""" + Style.RESET_ALL + """) > """)
                       cmd = checks.escaped_cmd(cmd)
                       if cmd.lower() in settings.SHELL_OPTIONS:
                         os_shell_option = checks.check_os_shell_options(cmd.lower(), technique, go_back, no_result) 
                         if os_shell_option == False:
-                          return False
+                          if no_result == True:
+                            return False
+                          else:
+                            return True
                         elif os_shell_option == "quit":                    
                           sys.exit(0)
                         elif os_shell_option == "back":
@@ -382,7 +391,29 @@ The exploitation function.
 (call the injection handler)
 """
 def exploitation(url, delay, filename, http_request_method, url_time_response):
-  if tb_injection_handler(url, delay, filename, http_request_method, url_time_response) == False:
-    return False
-    
+  if url_time_response >= settings.SLOW_TARGET_RESPONSE:
+    print Fore.YELLOW + "(^) Warning: It is highly recommended, due to serious response delays, to skip the time-based (blind) technique and to continue with the file-based (semiblind) technique." + Style.RESET_ALL 
+    go_back = False
+    while True:
+      if go_back == True:
+        return False
+      proceed_option = raw_input("(?) How do you want to proceed? [(C)ontinue/(s)kip/(q)uit] > ").lower()
+      if proceed_option.lower() in settings.CHOISE_PROCEED :
+        if proceed_option.lower() == "s":
+          from src.core.injections.semiblind.techniques.file_based import fb_handler
+          fb_handler.exploitation(url, delay, filename, http_request_method, url_time_response)
+        elif proceed_option.lower() == "c":
+          if tb_injection_handler(url, delay, filename, http_request_method, url_time_response) == False:
+            return False
+        elif proceed_option.lower() == "q":
+          raise SystemExit()
+      else:
+        if proceed_option == "":
+          proceed_option = "enter"
+        print Back.RED + "(x) Error: '" + proceed_option + "' is not a valid answer." + Style.RESET_ALL
+        pass
+  else:
+    if tb_injection_handler(url, delay, filename, http_request_method, url_time_response) == False:
+      return False
+#eof
 #eof
