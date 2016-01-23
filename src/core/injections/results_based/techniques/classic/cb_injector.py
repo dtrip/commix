@@ -3,7 +3,7 @@
 
 """
 This file is part of commix (@commixproject) tool.
-Copyright (c) 2015 Anastasios Stasinopoulos (@ancst).
+Copyright (c) 2014-2016 Anastasios Stasinopoulos (@ancst).
 https://github.com/stasinopoulos/commix
 
 This program is free software: you can redistribute it and/or modify
@@ -39,7 +39,7 @@ from src.core.injections.controller import checks
 from src.core.injections.results_based.techniques.classic import cb_payloads
 
 """
-The "classic" technique on Result-based OS Command Injection.
+The "classic" technique on result-based OS command injection.
 """
 
 """
@@ -53,7 +53,7 @@ def get_request_response(request):
       response = proxy.use_proxy(request)
     except urllib2.HTTPError, err:
       if settings.IGNORE_ERR_MSG == False:
-        print "\n" + Back.RED + "(x) Error: " + str(err) + Style.RESET_ALL
+        print "\n" + Back.RED + settings.ERROR_SIGN + str(err) + Style.RESET_ALL
         continue_tests = checks.continue_tests(err)
         if continue_tests == True:
           settings.IGNORE_ERR_MSG = True
@@ -62,7 +62,7 @@ def get_request_response(request):
       response = False 
     except urllib2.URLError, err:
       if "Connection refused" in err.reason:
-        print "\n" + Back.RED + "(x) Critical: The target host is not responding." + \
+        print "\n" + Back.RED + settings.CRITICAL_SIGN + "The target host is not responding." + \
               " Please ensure that is up and try again." + Style.RESET_ALL
       raise SystemExit()
 
@@ -72,7 +72,7 @@ def get_request_response(request):
       response = tor.use_tor(request)
     except urllib2.HTTPError, err:
       if settings.IGNORE_ERR_MSG == False:
-        print "\n" + Back.RED + "(x) Error: " + str(err) + Style.RESET_ALL
+        print "\n" + Back.RED + settings.ERROR_SIGN + str(err) + Style.RESET_ALL
         continue_tests = checks.continue_tests(err)
         if continue_tests == True:
           settings.IGNORE_ERR_MSG = True
@@ -81,7 +81,7 @@ def get_request_response(request):
       response = False 
     except urllib2.URLError, err:
       if "Connection refused" in err.reason:
-        print "\n" + Back.RED + "(x) Critical: The target host is not responding." + \
+        print "\n" + Back.RED + settings.CRITICAL_SIGN + "The target host is not responding." + \
               " Please ensure that is up and try again." + Style.RESET_ALL
       raise SystemExit()
 
@@ -90,7 +90,7 @@ def get_request_response(request):
       response = urllib2.urlopen(request)
     except urllib2.HTTPError, err:
       if settings.IGNORE_ERR_MSG == False:
-        print "\n" + Back.RED + "(x) Error: " + str(err) + Style.RESET_ALL
+        print "\n" + Back.RED + settings.ERROR_SIGN + str(err) + Style.RESET_ALL
         continue_tests = checks.continue_tests(err)
         if continue_tests == True:
           settings.IGNORE_ERR_MSG = True
@@ -99,7 +99,7 @@ def get_request_response(request):
       response = False  
     except urllib2.URLError, err:
       if "Connection refused" in err.reason:
-        print "\n" + Back.RED + "(x) Critical: The target host is not responding." + \
+        print "\n" + Back.RED + settings.CRITICAL_SIGN + "The target host is not responding." + \
               " Please ensure that is up and try again." + Style.RESET_ALL
       raise SystemExit()
 
@@ -198,7 +198,7 @@ def cookie_injection_test(url, vuln_parameter, payload):
       response = inject_cookie(url, vuln_parameter, payload, proxy)
     except urllib2.HTTPError, err:
       if settings.IGNORE_ERR_MSG == False:
-        print "\n" + Back.RED + "(x) Error: " + str(err) + Style.RESET_ALL
+        print "\n" + Back.RED + settings.ERROR_SIGN + str(err) + Style.RESET_ALL
         continue_tests = checks.continue_tests(err)
         if continue_tests == True:
           settings.IGNORE_ERR_MSG = True
@@ -207,7 +207,7 @@ def cookie_injection_test(url, vuln_parameter, payload):
       response = False  
     except urllib2.URLError, err:
       if "Connection refused" in err.reason:
-        print "\n" + Back.RED + "(x) Critical: The target host is not responding." + \
+        print "\n" + Back.RED + settings.CRITICAL_SIGN + "The target host is not responding." + \
               " Please ensure that is up and try again." + Style.RESET_ALL
       raise SystemExit()
 
@@ -218,7 +218,7 @@ def cookie_injection_test(url, vuln_parameter, payload):
       response = inject_cookie(url, vuln_parameter, payload, proxy)
     except urllib2.HTTPError, err:
       if settings.IGNORE_ERR_MSG == False:
-        print "\n" + Back.RED + "(x) Error: " + str(err) + Style.RESET_ALL
+        print "\n" + Back.RED + settings.ERROR_SIGN + str(err) + Style.RESET_ALL
         continue_tests = checks.continue_tests(err)
         if continue_tests == True:
           settings.IGNORE_ERR_MSG = True
@@ -227,7 +227,7 @@ def cookie_injection_test(url, vuln_parameter, payload):
       response = False 
     except urllib2.URLError, err:
       if "Connection refused" in err.reason:
-        print "\n" + Back.RED + "(x) Critical: The target host is not responding." + \
+        print "\n" + Back.RED + settings.CRITICAL_SIGN + "The target host is not responding." + \
               " Please ensure that is up and try again." + Style.RESET_ALL
       raise SystemExit()
 
@@ -236,7 +236,7 @@ def cookie_injection_test(url, vuln_parameter, payload):
       response = inject_cookie(url, vuln_parameter, payload, proxy)
     except urllib2.HTTPError, err:
       if settings.IGNORE_ERR_MSG == False:
-        print "\n" + Back.RED + "(x) Error: " + str(err) + Style.RESET_ALL
+        print "\n" + Back.RED + settings.ERROR_SIGN + str(err) + Style.RESET_ALL
         continue_tests = checks.continue_tests(err)
         if continue_tests == True:
           settings.IGNORE_ERR_MSG = True
@@ -245,7 +245,7 @@ def cookie_injection_test(url, vuln_parameter, payload):
       response = False 
     except urllib2.URLError, err:
       if "Connection refused" in err.reason:
-        print "\n" + Back.RED + "(x) Critical: The target host is not responding." + \
+        print "\n" + Back.RED + settings.CRITICAL_SIGN + "The target host is not responding." + \
               " Please ensure that is up and try again." + Style.RESET_ALL
       raise SystemExit()
 
@@ -257,7 +257,6 @@ Check if target host is vulnerable. (User-Agent-based injection)
 def user_agent_injection_test(url, vuln_parameter, payload):
 
   def inject_user_agent(url, vuln_parameter, payload, proxy):
-
     if proxy == None:
       opener = urllib2.build_opener()
     else:
@@ -279,7 +278,7 @@ def user_agent_injection_test(url, vuln_parameter, payload):
       response = inject_user_agent(url, vuln_parameter, payload, proxy)
     except urllib2.HTTPError, err:
       if settings.IGNORE_ERR_MSG == False:
-        print "\n" + Back.RED + "(x) Error: " + str(err) + Style.RESET_ALL
+        print "\n" + Back.RED + settings.ERROR_SIGN + str(err) + Style.RESET_ALL
         continue_tests = checks.continue_tests(err)
         if continue_tests == True:
           settings.IGNORE_ERR_MSG = True
@@ -288,7 +287,7 @@ def user_agent_injection_test(url, vuln_parameter, payload):
       response = False 
     except urllib2.URLError, err:
       if "Connection refused" in err.reason:
-        print "\n" + Back.RED + "(x) Critical: The target host is not responding." + \
+        print "\n" + Back.RED + settings.CRITICAL_SIGN + "The target host is not responding." + \
               " Please ensure that is up and try again." + Style.RESET_ALL
       raise SystemExit()
 
@@ -299,7 +298,7 @@ def user_agent_injection_test(url, vuln_parameter, payload):
       response = inject_user_agent(url, vuln_parameter, payload, proxy)
     except urllib2.HTTPError, err:
       if settings.IGNORE_ERR_MSG == False:
-        print "\n" + Back.RED + "(x) Error: " + str(err) + Style.RESET_ALL
+        print "\n" + Back.RED + settings.ERROR_SIGN + str(err) + Style.RESET_ALL
         continue_tests = checks.continue_tests(err)
         if continue_tests == True:
           settings.IGNORE_ERR_MSG = True
@@ -308,7 +307,7 @@ def user_agent_injection_test(url, vuln_parameter, payload):
       response = False 
     except urllib2.URLError, err:
       if "Connection refused" in err.reason:
-        print "\n" + Back.RED + "(x) Critical: The target host is not responding." + \
+        print "\n" + Back.RED + settings.CRITICAL_SIGN + "The target host is not responding." + \
               " Please ensure that is up and try again." + Style.RESET_ALL
       raise SystemExit()
 
@@ -317,7 +316,7 @@ def user_agent_injection_test(url, vuln_parameter, payload):
       response = inject_user_agent(url, vuln_parameter, payload, proxy)
     except urllib2.HTTPError, err:
       if settings.IGNORE_ERR_MSG == False:
-        print "\n" + Back.RED + "(x) Error: " + str(err) + Style.RESET_ALL
+        print "\n" + Back.RED + settings.ERROR_SIGN + str(err) + Style.RESET_ALL
         continue_tests = checks.continue_tests(err)
         if continue_tests == True:
           settings.IGNORE_ERR_MSG = True
@@ -326,7 +325,7 @@ def user_agent_injection_test(url, vuln_parameter, payload):
       response = False 
     except urllib2.URLError, err:
       if "Connection refused" in err.reason:
-        print "\n" + Back.RED + "(x) Critical: The target host is not responding." + \
+        print "\n" + Back.RED + settings.CRITICAL_SIGN + "The target host is not responding." + \
               " Please ensure that is up and try again." + Style.RESET_ALL
       raise SystemExit()
 
@@ -360,7 +359,7 @@ def referer_injection_test(url, vuln_parameter, payload):
       response = inject_referer(url, vuln_parameter, payload, proxy)
     except urllib2.HTTPError, err:
       if settings.IGNORE_ERR_MSG == False:
-        print "\n" + Back.RED + "(x) Error: " + str(err) + Style.RESET_ALL
+        print "\n" + Back.RED + settings.ERROR_SIGN + str(err) + Style.RESET_ALL
         continue_tests = checks.continue_tests(err)
         if continue_tests == True:
           settings.IGNORE_ERR_MSG = True
@@ -369,7 +368,7 @@ def referer_injection_test(url, vuln_parameter, payload):
       response = False 
     except urllib2.URLError, err:
       if "Connection refused" in err.reason:
-        print "\n" + Back.RED + "(x) Critical: The target host is not responding." + \
+        print "\n" + Back.RED + settings.CRITICAL_SIGN + "The target host is not responding." + \
               " Please ensure that is up and try again." + Style.RESET_ALL
       raise SystemExit()
           
@@ -380,7 +379,7 @@ def referer_injection_test(url, vuln_parameter, payload):
       response = inject_referer(url, vuln_parameter, payload, proxy)
     except urllib2.HTTPError, err:
       if settings.IGNORE_ERR_MSG == False:
-        print "\n" + Back.RED + "(x) Error: " + str(err) + Style.RESET_ALL
+        print "\n" + Back.RED + settings.ERROR_SIGN + str(err) + Style.RESET_ALL
         continue_tests = checks.continue_tests(err)
         if continue_tests == True:
           settings.IGNORE_ERR_MSG = True
@@ -389,7 +388,7 @@ def referer_injection_test(url, vuln_parameter, payload):
       response = False 
     except urllib2.URLError, err:
       if "Connection refused" in err.reason:
-        print "\n" + Back.RED + "(x) Critical: The target host is not responding." + \
+        print "\n" + Back.RED + settings.CRITICAL_SIGN + "The target host is not responding." + \
               " Please ensure that is up and try again." + Style.RESET_ALL
       raise SystemExit()
           
@@ -398,7 +397,7 @@ def referer_injection_test(url, vuln_parameter, payload):
       response = inject_referer(url, vuln_parameter, payload, proxy)
     except urllib2.HTTPError, err:
       if settings.IGNORE_ERR_MSG == False:
-        print "\n" + Back.RED + "(x) Error: " + str(err) + Style.RESET_ALL
+        print "\n" + Back.RED + settings.ERROR_SIGN + str(err) + Style.RESET_ALL
         continue_tests = checks.continue_tests(err)
         if continue_tests == True:
           settings.IGNORE_ERR_MSG = True
@@ -407,7 +406,7 @@ def referer_injection_test(url, vuln_parameter, payload):
       response = False 
     except urllib2.URLError, err:
       if "Connection refused" in err.reason:
-        print "\n" + Back.RED + "(x) Critical: The target host is not responding." + \
+        print "\n" + Back.RED + settings.CRITICAL_SIGN + "The target host is not responding." + \
               " Please ensure that is up and try again." + Style.RESET_ALL
       raise SystemExit()
           
@@ -441,7 +440,7 @@ def injection(separator, TAG, cmd, prefix, suffix, whitespace, http_request_meth
 
   # Check if defined "--verbose" option.
   if menu.options.verbose:
-    sys.stdout.write("\n" + Fore.GREY + "(~) Payload: " + payload + Style.RESET_ALL)
+    sys.stdout.write("\n" + Fore.GREY + settings.PAYLOAD_SIGN + payload + Style.RESET_ALL)
 
   # Check if defined cookie with "INJECT_HERE" tag
   if menu.options.cookie and settings.INJECT_TAG in menu.options.cookie:
@@ -504,11 +503,15 @@ The command execution results.
 def injection_results(response, TAG):
   # Grab execution results
   html_data = response.read()
-  shell = re.findall(r"" + TAG + TAG + "(.*)" + TAG + TAG + "", html_data)
+  shell = re.findall(r"" + TAG + TAG + "(.*)" + TAG + TAG + "", html_data, re.S)
   if len(shell) > 1:
     shell = shell[0]
+  # Clean junks
   shell = [backslash.replace("\/","/") for backslash in shell]
-  
+  shell = [tags.replace(TAG + TAG,"") for tags in shell]
+  if settings.TARGET_OS == "win" and menu.options.alter_shell: 
+    shell = [newline.replace("\n"," ") for newline in shell]
+    shell = [right_space.rstrip() for right_space in shell]
+    shell = [left_space.lstrip() for left_space in shell]
   return shell
 
-#eof

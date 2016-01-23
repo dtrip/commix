@@ -3,7 +3,7 @@
 
 """
 This file is part of commix (@commixproject) tool.
-Copyright (c) 2015 Anastasios Stasinopoulos (@ancst).
+Copyright (c) 2014-2016 Anastasios Stasinopoulos (@ancst).
 https://github.com/stasinopoulos/commix
 
 This program is free software: you can redistribute it and/or modify
@@ -19,23 +19,23 @@ import urllib2
 
 from src.utils import menu
 from src.utils import settings
-from src.thirdparty.colorama import Fore, Back, Style, init
 
 from src.core.requests import headers
+from src.thirdparty.colorama import Fore, Back, Style, init
 
 """
  Check if HTTP Proxy is defined.
 """
 def do_check(url):
   check_proxy = True
-  sys.stdout.write("(*) Testing proxy " + menu.options.proxy + "... ")
+  sys.stdout.write(settings.INFO_SIGN + "Testing proxy " + menu.options.proxy + "... ")
   sys.stdout.flush()
   try:
     # Check if defined POST data
     if menu.options.data:
       request = urllib2.Request(url, menu.options.data)
     else:
-      request = urllib2.Request(url)
+       request = urllib2.Request(url)
     # Check if defined extra headers.
     headers.do_check(request)
     request.set_proxy(menu.options.proxy,settings.PROXY_PROTOCOL)
@@ -51,7 +51,7 @@ def do_check(url):
     sys.stdout.flush()
   else:
     print "[" + Fore.RED + " FAILED " + Style.RESET_ALL + "]"
-    print Back.RED + "(x) Error: Could not connect to proxy." + Style.RESET_ALL
+    print Back.RED + settings.ERROR_SIGN + "Could not connect to proxy." + Style.RESET_ALL
     sys.exit(0)
     
 """

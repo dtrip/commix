@@ -3,7 +3,7 @@
 
 """
 This file is part of commix (@commixproject) tool.
-Copyright (c) 2015 Anastasios Stasinopoulos (@ancst).
+Copyright (c) 2014-2016 Anastasios Stasinopoulos (@ancst).
 https://github.com/stasinopoulos/commix
 
 This program is free software: you can redistribute it and/or modify
@@ -17,7 +17,6 @@ For more see the file 'readme/COPYING' for copying permission.
 import re
 import base64
 import urllib2
-
 from src.utils import menu
 from src.utils import settings
 from src.thirdparty.colorama import Fore, Back, Style, init
@@ -49,10 +48,10 @@ def do_check(request):
 
   # Check if defined any HTTP Authentication credentials.
   # HTTP Authentication: Basic Access Authentication
-  if menu.options.auth_type == "basic":
-    if menu.options.auth_cred:
-      b64_string = base64.encodestring(menu.options.auth_cred).replace('\n', '')
-      request.add_header("Authorization", "Basic " + b64_string +"")
+  # if menu.options.auth_type == "basic":
+  if menu.options.auth_cred:
+    b64_string = base64.encodestring(menu.options.auth_cred).replace('\n', '')
+    request.add_header("Authorization", "Basic " + b64_string + "")
   
   # The MIME media type for JSON.
   if settings.IS_JSON:

@@ -3,7 +3,7 @@
 
 """
 This file is part of commix (@commixproject) tool.
-Copyright (c) 2015 Anastasios Stasinopoulos (@ancst).
+Copyright (c) 2014-2016 Anastasios Stasinopoulos (@ancst).
 https://github.com/stasinopoulos/commix
 
 This program is free software: you can redistribute it and/or modify
@@ -24,6 +24,19 @@ from src.utils import settings
 from src.thirdparty.colorama import Fore, Back, Style, init
 
 """
+Get the URL part of the defined URL.
+"""
+def get_url_part(url):
+  
+  # Find the host part
+  url_part = url.split("?")[0]
+  # Remove "/" if "/?" in url
+  if url_part.endswith("/"):
+    url_part = url_part[:-len("/")]
+
+  return url_part
+
+"""
 Check if the 'INJECT_HERE' tag, is specified on GET Requests.
 """
 def do_GET_check(url):
@@ -31,19 +44,16 @@ def do_GET_check(url):
   # Check for REST-ful URLs format. 
   if "?" not in url:
     if settings.INJECT_TAG not in url and not menu.options.shellshock:
-      print Back.RED + "(x) Error: You must set the \"INJECT_HERE\" tag to specify the testable parameter." + Style.RESET_ALL + "\n"
-      os._exit(0)
+      print Back.RED + settings.ERROR_SIGN + "You must set the \"INJECT_HERE\" tag to specify the testable parameter." + Style.RESET_ALL + "\n"
+      os._exit(0)   
     return url
 
   # Find the host part
-  url_part = url.split("?")[0]
-  
-  # Remove "/" if "/?" in url
-  if url_part.endswith("/"):
-  	url_part = url_part[:-len("/")]
-  	
+  url_part = get_url_part(url)
+
   # Find the parameter part
   parameters = url.split("?")[1]
+
   # Split parameters
   multi_parameters = parameters.split(settings.PARAMETER_DELIMITER)
 
@@ -61,14 +71,14 @@ def do_GET_check(url):
       parameters = parameters.replace(value, inject_value)
 
     # Reconstruct the url
-    url = url_part +"?"+ parameters
+    url = url_part + "?" + parameters
     return url
 
   # Check if multiple paramerters are supplied.
   else:
     # Check if defined the "INJECT_HERE" tag
     if settings.INJECT_TAG not in url:
-      print Back.RED + "(x) Error: You must set the \"INJECT_HERE\" tag to specify the testable parameter." + Style.RESET_ALL + "\n"
+      print Back.RED + settings.ERROR_SIGN + "You must set the \"INJECT_HERE\" tag to specify the testable parameter." + Style.RESET_ALL + "\n"
       os._exit(0)
 
     all_params = settings.PARAMETER_DELIMITER.join(multi_parameters)
@@ -79,7 +89,7 @@ def do_GET_check(url):
       value = ''.join(value)
       parameter = settings.PARAMETER_DELIMITER.join(multi_parameters)
 
-    url = url_part +"?"+ parameter  
+    url = url_part + "?" + parameter  
     return url
 
       ## Multiple paramerters without the "INJECT_HERE" tag.
@@ -99,7 +109,7 @@ def do_GET_check(url):
         #multi_parameters[i-1] = multi_parameters[i-1].replace(inject_value, old)
         #parameter = '&'.join(multi_parameters)
         ## Reconstruct the url
-        #url = url_part +"?"+ parameter
+        #url = url_part + "?" + parameter
         ## Add all urls to url list.
         #urls_list.append(url)
       #return urls_list
@@ -152,7 +162,7 @@ def do_POST_check(parameter):
       json_object = json.loads(parameter)
     except ValueError, err:
       if not "No JSON object could be decoded" in err:
-        print Back.RED + "(x) Error: JSON " + str(err) + ". " + Style.RESET_ALL + "\n"
+        print Back.RED + settings.ERROR_SIGN + "JSON " + str(err) + ". " + Style.RESET_ALL + "\n"
         sys.exit(0)
       return False
     else:  
@@ -192,7 +202,7 @@ def do_POST_check(parameter):
     else:
       # Check if defined the "INJECT_HERE" tag
       if settings.INJECT_TAG not in parameter:
-        print Back.RED + "(x) Error: You must set the \"INJECT_HERE\" tag to specify the testable parameter." + Style.RESET_ALL + "\n"
+        print Back.RED + settings.ERROR_SIGN + "You must set the \"INJECT_HERE\" tag to specify the testable parameter." + Style.RESET_ALL + "\n"
         os._exit(0)
 
       all_params = settings.PARAMETER_DELIMITER.join(multi_parameters)
@@ -225,7 +235,7 @@ def do_POST_check(parameter):
     else:
       # Check if defined the "INJECT_HERE" tag
       if settings.INJECT_TAG not in parameter:
-        print Back.RED + "(x) Error: You must set the \"INJECT_HERE\" tag to specify the testable parameter." + Style.RESET_ALL + "\n"
+        print Back.RED + settings.ERROR_SIGN + "You must set the \"INJECT_HERE\" tag to specify the testable parameter." + Style.RESET_ALL + "\n"
         os._exit(0)
 
       all_params = settings.PARAMETER_DELIMITER.join(multi_parameters)
@@ -267,15 +277,15 @@ def vuln_POST_param(parameter, url):
     if re.findall(r"" + settings.PARAMETER_DELIMITER + "(.*)=" + settings.INJECT_TAG + "", parameter):
       vuln_parameter = re.findall(r"" + settings.PARAMETER_DELIMITER + "(.*)=" + settings.INJECT_TAG + "", parameter)
       vuln_parameter = ''.join(vuln_parameter)
-      vuln_parameter = re.sub(r"(.*)=(.*)"+ settings.PARAMETER_DELIMITER, "", vuln_parameter)
+      vuln_parameter = re.sub(r"(.*)=(.*)" + settings.PARAMETER_DELIMITER, "", vuln_parameter)
 
     elif re.findall(r"(.*)=" + settings.INJECT_TAG + "", parameter):
       vuln_parameter = re.findall(r"(.*)=" + settings.INJECT_TAG + "", parameter)
       vuln_parameter = ''.join(vuln_parameter)
 
     # If JSON format
-    elif re.findall(r""+settings.PARAMETER_DELIMITER +"\"(.*)\"\:\"" + settings.INJECT_TAG + "\"", parameter):
-      vuln_parameter = re.findall(r""+settings.PARAMETER_DELIMITER +"\"(.*)\"\:\"" + settings.INJECT_TAG + "\"", parameter)
+    elif re.findall(r"" + settings.PARAMETER_DELIMITER + "\"(.*)\"\:\"" + settings.INJECT_TAG + "\"", parameter):
+      vuln_parameter = re.findall(r"" + settings.PARAMETER_DELIMITER + "\"(.*)\"\:\"" + settings.INJECT_TAG + "\"", parameter)
       vuln_parameter = ''.join(vuln_parameter)
 
     elif re.findall(r"\"(.*)\"\:\"" + settings.INJECT_TAG + "\"", parameter):
@@ -322,7 +332,7 @@ def specify_cookie_parameter(cookie):
   if re.findall(r"" + settings.COOKIE_DELIMITER + "(.*)=" + settings.INJECT_TAG + "", cookie):
     inject_cookie = re.findall(r"" + settings.COOKIE_DELIMITER + "(.*)=" + settings.INJECT_TAG + "", cookie)
     inject_cookie = ''.join(inject_cookie)
-    inject_cookie = re.sub(r"(.*)=(.*)"+settings.COOKIE_DELIMITER, "", inject_cookie)
+    inject_cookie = re.sub(r"(.*)=(.*)" + settings.COOKIE_DELIMITER, "", inject_cookie)
 
   elif re.findall(r"(.*)=" + settings.INJECT_TAG + "", cookie):
     inject_cookie = re.findall(r"(.*)=" + settings.INJECT_TAG + "", cookie)

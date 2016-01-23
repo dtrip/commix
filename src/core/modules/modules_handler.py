@@ -3,7 +3,7 @@
 
 """
 This file is part of commix (@commixproject) tool.
-Copyright (c) 2015 Anastasios Stasinopoulos (@ancst).
+Copyright (c) 2014-2016 Anastasios Stasinopoulos (@ancst).
 https://github.com/stasinopoulos/commix
 
 This program is free software: you can redistribute it and/or modify
@@ -34,7 +34,7 @@ def load_modules(url, http_request_method, filename):
       # The icmp exfiltration handler
       icmp_exfiltration.icmp_exfiltration_handler(url, http_request_method)
     except ImportError as e:
-      print "\n" + Back.RED + "(x) Error: " + str(e) + Style.RESET_ALL
+      print "\n" + Back.RED + settings.ERROR_SIGN + str(e) + Style.RESET_ALL
       sys.exit(0) 
     sys.exit(0)
 
@@ -46,6 +46,6 @@ def load_modules(url, http_request_method, filename):
       # The Shellshock handler
       shellshock.shellshock_handler(url, http_request_method, filename)
     except ImportError as e:
-      print "\n" + Back.RED + "(x) Error: " + str(e) + Style.RESET_ALL
+      print "\n" + Back.RED + settings.ERROR_SIGN + str(e) + Style.RESET_ALL
       sys.exit(0) 
     sys.exit(0) 

