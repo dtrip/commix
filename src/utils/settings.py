@@ -27,7 +27,7 @@ The global variables.
 APPLICATION = "commix"
 DESCRIPTION = "Automated All-in-One OS Command Injection and Exploitation Tool"
 AUTHOR  = "Anastasios Stasinopoulos"
-VERSION = "v0.3b"
+VERSION = "v0.7b"
 YEAR    = "2014-2016"
 TWITTER = "@ancst" 
 
@@ -42,7 +42,8 @@ if os.path.isdir("./.git"):
   with open('.git/refs/heads/master', 'r') as f:
     COMMIT_ID = "-" + "git" + "-" + f.readline()[0:7]
 else:
-    COMMIT_ID = "-" + "nongit" + "-" + time.strftime("%Y%m%d", time.gmtime(os.path.getmtime(min(os.listdir(os.getcwd()), key=os.path.getctime))))
+  os.chdir("src/")
+  COMMIT_ID = "-" + "nongit" + "-" + time.strftime("%Y%m%d", time.gmtime(os.path.getmtime(min(os.listdir(os.getcwd()), key=os.path.getctime))))
 
 # Check if OS is Windows.
 IS_WINDOWS = hasattr(sys, 'getwindowsversion')
@@ -60,11 +61,17 @@ OUTPUT_FILE_NAME = "logs"
 OUTPUT_FILE_EXT = ".txt"
 OUTPUT_FILE = OUTPUT_FILE_NAME + OUTPUT_FILE_EXT
 
-# Max Length
+# Max Length.
 MAXLEN = "10000"
 
-# Slow target response
+# Slow target response.
 SLOW_TARGET_RESPONSE = 3
+
+# The testable parameter.
+TESTABLE_PARAMETER = "" 
+
+# The HTTP header name.
+HTTP_HEADER = ""
 
 # The command injection prefixes.
 PREFIXES = ["", "'", "\"", "&", "%26", "|", "%7C", "%27", "%22"] 
@@ -168,19 +175,14 @@ CHOISE_QUIT = ['q','quit']
 # Accepts 'W','w','U','u','Q','q'
 CHOISE_OS = ['w','u','q']
 
-# Accepts 'C','c','S','s','Q','q'
-CHOISE_PROCEED = ['c','s','q']
+# Accepts 'C','c','S','s','Q','q','a','A','n','N'
+CHOISE_PROCEED = ['c','s','q','a','n']
 
 # Available alternative shells
 AVAILABLE_SHELLS = ["python"]
 
-# Available injectipon techniques
-AVAILABLE_TECHNIQUES = [
-        "classic", "c",
-        "eval-based", "e",
-        "time-based", "t",
-        "file-based", "f",
-]
+# Available injection techniques.
+AVAILABLE_TECHNIQUES = [ "c", "e", "t", "f" ]
 
 # User Agent List
 USER_AGENT_LIST = [
@@ -211,6 +213,10 @@ USER_AGENT_INJECTION = False
 # Referer injection
 REFERER_INJECTION = False
 
+# Custom HTTP Headers injection
+CUSTOM_HEADER_INJECTION = False
+CUSTOM_HEADER_NAME = "" 
+
 # Valid URL format check
 VALID_URL_FORMAT = "https?://(?:www)?(?:[\w-]{2,255}(?:\.\w{2,6}){1,2})(?:/[\w&%?#-]{1,300})?"
 
@@ -220,7 +226,14 @@ SHELL_OPTIONS = [
         'quit',
         'back',
         'os_shell',
-        'reverse_tcp'
+        'reverse_tcp',
+        'set',
+]
+
+# Accepted reverse tcp shell menu options
+SET_OPTIONS = [
+        'LHOST',
+        'LPORT'
 ]
 
 # Cookie delimiter
@@ -313,12 +326,13 @@ WIN_PYTHON_DIR = "C:\\Python27\\"
 # Windows PHP installed directory.
 WIN_PHP_DIR = "C:\\xampp\\php\\"
 
-# Windows comment
+# Comment out
 WIN_COMMENT = " REM "
+COMMENT = " # "
 
 #Delete command
-WIN_DEL = " DEL "
-DEL = " rm "
+WIN_DEL = "DEL "
+DEL = "rm "
 
 # Time-based Variables
 FOUND_HOW_LONG = "" 
@@ -338,5 +352,26 @@ ERROR_SIGN = "(x) Error: "
 CRITICAL_SIGN = "(x) Critical: "
 ABORTION_SIGN = "(x) Aborted: "
 PAYLOAD_SIGN = "(~) Payload: "
+
+# Default LHOST / LPORT setup, 
+# for the reverse TCP connection
+LHOST = ""
+LPORT = ""
+
+# Maybe a WAF/IPS/IDS protection.
+WAF_ENABLED = False
+
+# Session Handler
+SESSION_FILE = ""
+LOAD_SESSION = None
+
+# Retest all techniques
+RETEST = False
+
+# Define the default credentials files
+USERNAMES_TXT_FILE = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'txt')) + "/" + "usernames.txt"
+PASSWORDS_TXT_FILE = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'txt')) + "/" + "passwords_john.txt"
+
+REQUIRED_AUTHENTICATION = False
 
 #eof

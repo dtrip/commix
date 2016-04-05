@@ -21,6 +21,7 @@ import urllib2
 from src.utils import menu
 from src.utils import logs
 from src.utils import settings
+from src.utils import session_handler
 
 from src.thirdparty.colorama import Fore, Back, Style, init
 
@@ -44,7 +45,7 @@ Checks if the testable parameter is exploitable.
 General check on every injection technique.
 """
 def do_check(url, filename):
-
+  
   classic_state = False
   eval_based_state = False
   time_based_state = False
@@ -76,7 +77,8 @@ def do_check(url, filename):
     http_request_method = "GET"
     if not settings.COOKIE_INJECTION \
     and not settings.USER_AGENT_INJECTION \
-    and not settings.REFERER_INJECTION:
+    and not settings.REFERER_INJECTION \
+    and not settings.CUSTOM_HEADER_INJECTION:
       url = parameters.do_GET_check(url)
     check_parameter = parameters.vuln_GET_param(url)
     the_type = " parameter "
@@ -87,30 +89,51 @@ def do_check(url, filename):
     parameter = parameters.do_POST_check(parameter)
     check_parameter = parameters.vuln_POST_param(parameter, url)
     the_type = " parameter " 
-
+  
   # Load modules
   modules_handler.load_modules(url, http_request_method, filename)
 
   # Cookie Injection
   if settings.COOKIE_INJECTION == True:
     header_name = " Cookie"
+    settings.HTTP_HEADER = header_name[1:].lower()
     check_parameter  = parameters.specify_cookie_parameter(menu.options.cookie)
     the_type = " HTTP header "
             
   # User-Agent Injection
   elif settings.USER_AGENT_INJECTION == True:
     header_name = " User-Agent"
+    settings.HTTP_HEADER = header_name[1:].replace("-","").lower()
     check_parameter  = ""
     the_type = " HTTP header "
 
   # Referer Injection
   elif settings.REFERER_INJECTION == True:
     header_name = " Referer"
+    settings.HTTP_HEADER = header_name[1:].lower()
     check_parameter  = ""
     the_type = " HTTP header "
 
-  else : 
-    pass
+  # Custom header Injection
+  elif settings.CUSTOM_HEADER_INJECTION == True:
+    header_name = " " + settings.CUSTOM_HEADER_NAME
+    settings.HTTP_HEADER = header_name[1:].lower()
+    check_parameter  = ""
+    the_type = " HTTP header "
+
+  if len(check_parameter) > 0:
+    settings.TESTABLE_PARAMETER = check_parameter
+
+  # Check for session file 
+  if not menu.options.ignore_session:
+    if os.path.isfile(settings.SESSION_FILE) and not settings.REQUIRED_AUTHENTICATION:
+      if not menu.options.tech:
+        menu.options.tech = session_handler.applied_techniques(url, http_request_method)
+      if session_handler.check_stored_parameter(url, http_request_method):
+        settings.LOAD_SESSION = True
+        
+  if menu.options.flush_session:
+    session_handler.flush(url)
 
   if len(check_parameter) != 0 :
     check_parameter = " '" + check_parameter + "'"
@@ -120,66 +143,35 @@ def do_check(url, filename):
   # Estimating the response time (in seconds)
   delay, url_time_response = requests.estimate_response_time(url, http_request_method, delay)
 
-  # Check all injection techniques
-  if not menu.options.tech:
-    # Check if it is vulnerable to classic command injection technique.
+  # Check if it is vulnerable to classic command injection technique.
+  if not menu.options.tech or "c" in menu.options.tech:
     if cb_handler.exploitation(url, delay, filename, http_request_method) != False:
       classic_state = True
+  else:
+    classic_state = False
 
-    # Check if it is vulnerable to eval-based code injection technique.
+  # Check if it is vulnerable to eval-based code injection technique.
+  if not menu.options.tech or "e" in menu.options.tech:
     if eb_handler.exploitation(url, delay, filename, http_request_method) != False:
       eval_based_state = True
+  else:
+    eval_based_state = False
 
-    # Check if it is vulnerable to time-based blind command injection technique.
+  # Check if it is vulnerable to time-based blind command injection technique.
+  if not menu.options.tech or "t" in menu.options.tech:
     if tb_handler.exploitation(url, delay, filename, http_request_method, url_time_response) != False:
       time_based_state = True
+  else:
+    time_based_state = False
 
-    # Check if it is vulnerable to file-based semiblind command injection technique.
+  # Check if it is vulnerable to file-based semiblind command injection technique.
+  if not menu.options.tech or "f" in menu.options.tech:
     if fb_handler.exploitation(url, delay, filename, http_request_method, url_time_response) != False:
       file_based_state = True
-
   else:
-    # Check if it is vulnerable to classic command injection technique.
-    if "classic" in menu.options.tech or len(menu.options.tech) <= 4 and "c" in menu.options.tech:
-      # Check if classic results-based command injection technique succeeds.
-      if cb_handler.exploitation(url, delay, filename, http_request_method) != False:
-        classic_state = True
-    elif menu.options.tech == "classic":
-      cb_handler.exploitation(url, delay, filename, http_request_method)
-    else:
-      classic_state = False
+    file_based_state = False
 
-    # Check if it is vulnerable to eval-based code injection technique.
-    if "eval-based" in menu.options.tech or len(menu.options.tech) <= 4 and "e" in menu.options.tech:
-      # Check if eval-based code injection technique succeeds.
-      if eb_handler.exploitation(url, delay, filename, http_request_method) != False:
-        eval_based_state = True
-    elif menu.options.tech == "eval-based":
-      eb_handler.exploitation(url, delay, filename, http_request_method)
-    else:
-      eval_based_state = False
-
-    # Check if it is vulnerable to time-based blind command injection technique.
-    if "time-based" in menu.options.tech or len(menu.options.tech) <= 4 and "t" in menu.options.tech:
-      # Check if time-based blind command injection technique succeeds.
-      if tb_handler.exploitation(url, delay, filename, http_request_method, url_time_response) != False:
-        time_based_state = True
-    elif menu.options.tech == "time-based":
-      tb_handler.exploitation(url, delay, filename, http_request_method, url_time_response)
-    else:
-      time_based_state = False
-
-    # Check if it is vulnerable to file-based semiblind command injection technique.
-    if "file-based" in menu.options.tech or len(menu.options.tech) <= 4 and "f" in menu.options.tech:
-       # Check if file-based semiblind command injection technique succeeds.
-      if fb_handler.exploitation(url, delay, filename, http_request_method, url_time_response) != False:
-        file_based_state = True
-    elif menu.options.tech == "file-based":
-      fb_handler.exploitation(url, delay, filename, http_request_method, url_time_response)
-    else:
-      file_based_state = False
-
-  if classic_state == False and eval_based_state == False and time_based_state == False and file_based_state == False :
+  if classic_state == eval_based_state == time_based_state == file_based_state == False :
     info_msg = settings.CRITICAL_SIGN + "The tested (" + http_request_method + ")" + check_parameter + " parameter appear to be not injectable."
     if not menu.options.alter_shell :
       info_msg += " Use the option '--alter-shell'"
@@ -187,9 +179,6 @@ def do_check(url, filename):
       info_msg += " Remove the option '--alter-shell'"
     info_msg += " and/or try to audit the HTTP headers (i.e 'User-Agent', 'Referer', 'Cookie' etc)."
     print Back.RED + info_msg + Style.RESET_ALL  
-    
-  # else:
-  #   print ""
   sys.exit(0)
 
 #eof

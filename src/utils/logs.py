@@ -16,8 +16,10 @@ For more see the file 'readme/COPYING' for copying permission.
 
 import os
 import re
+import sys
 import time
 import urllib
+import sqlite3
 import datetime
 
 from src.utils import menu
@@ -48,6 +50,18 @@ def create_log_file(url, output_dir):
       os.stat(output_dir + host + "/")
   except:
       os.mkdir(output_dir + host + "/") 
+
+  if menu.options.session_file is not None:
+    if os.path.exists(menu.options.session_file):
+      settings.SESSION_FILE = menu.options.session_file
+    else:
+       error_msg = "The provided session file ('" + \
+                    menu.options.session_file + \
+                    "') does not exists." 
+       print Back.RED + settings.ERROR_SIGN + error_msg + Style.RESET_ALL
+       sys.exit(0)
+  else:  
+    settings.SESSION_FILE = output_dir + host + "/" + "session" + ".db"
 
   # The logs filename construction.
   filename = output_dir + host + "/" + settings.OUTPUT_FILE
@@ -109,10 +123,9 @@ def update_payload(filename, counter, payload):
   output_file.close()
 
 """
-Log files cration notification
+Log files cration notification.
 """
 def logs_notification(filename):
   print "\n" + Style.BRIGHT + "(!) The results can be found at '" + os.getcwd() + "/" + filename + "'" + Style.RESET_ALL
-
 
 # eof

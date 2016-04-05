@@ -77,6 +77,22 @@ general.add_option("--output-dir",
                 dest="output_dir",
                 help="Set custom output directory path.")
 
+general.add_option("-s", 
+                action="store",
+                dest="session_file",
+                default=None,
+                help="Load session from a stored (.sqlite) file.")
+
+general.add_option("--flush-session",
+                action="store_true",
+                dest="flush_session",
+                help="Flush session files for current target.")
+
+general.add_option("--ignore-session", 
+                action="store_true",
+                dest="ignore_session",
+                help="Ignore results stored in session file.")
+
 # Target options
 target = OptionGroup(parser, Style.BRIGHT + "Target" + Style.RESET_ALL, 
                      "This options has to be provided, to define the target URL. ")
@@ -173,12 +189,24 @@ request.add_option("--auth-data",
 request.add_option("--auth-type",
                 action="store",
                 dest="auth_type",
-                help="HTTP authentication type (e.g. 'basic').")
+                help="HTTP authentication type (e.g. 'Basic').")
 
 request.add_option("--auth-cred",
                 action="store",
                 dest="auth_cred",
-                help="HTTP Authentication credentials (e.g. 'admin:admin').")
+                help="HTTP authentication credentials (e.g. 'admin:admin').")
+
+request.add_option("--ignore-401",
+                action="store_true",
+                dest="ignore_401",
+                default=False,
+                help="Ignore HTTP error 401 (Unauthorized).")
+
+request.add_option("--force-ssl",
+                action="store_true",
+                dest="force_ssl",
+                default = False,
+                help="Force usage of SSL/HTTPS.")
 
 # Enumeration options
 enumeration = OptionGroup(parser, Style.BRIGHT + "Enumeration" + Style.RESET_ALL, 
@@ -269,14 +297,19 @@ modules.add_option("--icmp-exfil",
                 action="store",
                 dest="ip_icmp_data",
                 default = False,
+                help="The 'ICMP exfiltration' injection module.           (e.g. 'ip_src=192.168.178.1,ip_dst=192.168.178.3').")
 
-                help="The 'icmp exfiltration' injection technique        (e.g. 'ip_src=192.168.178.1,ip_dst=192.168.178.3').")
+modules.add_option("--dns-server", 
+                action="store",
+                dest="dns_server",
+                default = False,
+                help="The 'DNS exfiltration' injection module.        (Domain name used for DNS exfiltration attack).")
 
 modules.add_option("--shellshock", 
                 action="store_true",
                 dest="shellshock",
                 default = False,
-                help="The 'shellshock' injection technique.")
+                help="The 'shellshock' injection module.")
 
 # Injection options
 injection = OptionGroup(parser, Style.BRIGHT + "Injection" + Style.RESET_ALL, 
@@ -306,29 +339,30 @@ injection.add_option("--maxlen",
                 action="store",
                 dest="maxlen",
                 default=settings.MAXLEN,
-                help="The length of the output on time-based technique (Default: " +str(settings.MAXLEN)+ " chars).")
+                help="Set the max length of output for time-related injection techniques (Default: " + str(settings.MAXLEN) + " chars).")
 
 injection.add_option("--delay", 
                 action="store",
                 dest="delay",
-                help="Set Time-delay for time-based and file-based techniques (Default: " +str(settings.DELAY)+ " sec).")
+                help="Set custom time delay for time-related injection techniques (Default: " + str(settings.DELAY) + " sec).")
 
 injection.add_option("--tmp-path", 
                 action="store",
                 dest="tmp_path",
                 default = False,
-                help="Set remote absolute path of temporary files directory (Default: " + settings.TMP_PATH + ").")
+                help="Set the absolute path of web server's temp directory.")
 
 injection.add_option("--root-dir", 
                 action="store",
                 dest="srv_root_dir",
                 default = False,
-                help="Set remote absolute path of web server's root directory (Default: " + settings.SRV_ROOT_DIR + ").")
+                help="Set the absolute path of web server's root directory.")
 
 injection.add_option("--alter-shell", 
                 action="store",
                 dest="alter_shell",
-                help="Use an alternative os-shell (e.g. Python).")
+                default = "",
+                help="Use an alternative os-shell (e.g. 'Python').")
 
 injection.add_option("--os-cmd", 
                 action="store",
@@ -336,11 +370,32 @@ injection.add_option("--os-cmd",
                 default = False,
                 help="Execute a single operating system command.")
 
+injection.add_option("--os",
+                action="store", 
+                dest="os",
+                default = False,
+                help="Force back-end operating system to this value.")
+
 injection.add_option("--base64", 
                 action="store_true",
                 dest="base64",
                 default = False,
                 help="Encode the operating system command to Base64 format.")
+
+# Miscellaneous options
+misc = OptionGroup(parser, Style.BRIGHT + "Miscellaneous" + Style.RESET_ALL)
+
+misc.add_option("--dependencies", 
+                action="store_true",
+                dest="noncore_dependencies",
+                default = False,
+                help="Check for third-party (non-core) dependencies.")
+
+misc.add_option("--skip-waf", 
+                action="store_true",
+                dest="skip_waf",
+                default = False,
+                help="Skip heuristic detection of WAF/IPS/IDS protection.")
 
 parser.add_option_group(general)
 parser.add_option_group(target)
@@ -349,6 +404,8 @@ parser.add_option_group(enumeration)
 parser.add_option_group(file_access)
 parser.add_option_group(modules)
 parser.add_option_group(injection)
+parser.add_option_group(misc)
+
 """
 Dirty hack from sqlmap [1], to display longer options without breaking into two lines.
 [1] https://github.com/sqlmapproject/sqlmap/blob/fdc8e664dff305aca19acf143c7767b9a7626881/lib/parse/cmdline.py
@@ -374,21 +431,47 @@ def shell_options():
       print """
   ---[ """ + Style.BRIGHT + Fore.BLUE + """Available options""" + Style.RESET_ALL + """ ]---     
   Type '""" + Style.BRIGHT + """?""" + Style.RESET_ALL + """' to get all the available options.
-  Type '""" + Style.BRIGHT + """back""" + Style.RESET_ALL + """' to go back to the injection process.
+  Type '""" + Style.BRIGHT + """set""" + Style.RESET_ALL + """' to set a context-specific variable to a value.
+  Type '""" + Style.BRIGHT + """back""" + Style.RESET_ALL + """' to move back from the current context.
   Type '""" + Style.BRIGHT + """quit""" + Style.RESET_ALL + """' (or use <Ctrl-C>) to quit commix.
   Type '""" + Style.BRIGHT + """os_shell""" + Style.RESET_ALL + """' to get into an operating system command shell.
   Type '""" + Style.BRIGHT + """reverse_tcp""" + Style.RESET_ALL + """' to get a reverse TCP connection.
-
   """
   
 """
-The tab compliter.
+The tab compliter (shell options).
 """
 def tab_completer(text, state):
+    set_options = [option for option in settings.SET_OPTIONS if option.startswith(text)]
     shell_options = [option for option in settings.SHELL_OPTIONS if option.startswith(text)]
+    available_options = shell_options + set_options
     try:
-        return shell_options[state]
+      return available_options[state]
     except IndexError:
-        return None
+      return None
+
+"""
+Check if enumeration options are enabled.
+"""
+def enumeration_options():
+  if options.hostname or \
+     options.current_user or \
+     options.is_root or \
+     options.is_admin or \
+     options.sys_info or \
+     options.users or \
+     options.privileges or \
+     options.passwords or \
+     options.ps_version :
+    return True
+
+"""
+Check if file access options are enabled.
+"""
+def file_access_options():
+  if options.file_write or \
+     options.file_upload or\
+     options.file_read:
+    return True
 
 #eof

@@ -20,7 +20,6 @@ import sys
 import random
 import httplib
 import urllib2
-import urlparse
 
 from socket import error as SocketError
 
@@ -42,6 +41,7 @@ from src.utils import update
 from src.utils import version
 from src.utils import install
 from src.utils import settings
+from src.utils import session_handler
 
 from src.thirdparty.colorama import Fore, Back, Style, init
 
@@ -49,7 +49,9 @@ from src.core.requests import tor
 from src.core.requests import proxy
 from src.core.requests import headers
 from src.core.requests import requests
+from src.core.requests import authentication
 
+from src.core.injections.controller import checks
 from src.core.injections.controller import parser
 from src.core.injections.controller import controller
 
@@ -72,7 +74,13 @@ def main():
         
     # Check python version number.
     version.python_version()
-            
+
+    # Check if defined "--dependencies" option. 
+    # For checking (non-core) third party dependenices.
+    if menu.options.noncore_dependencies:
+      checks.third_party_dependencies()
+      sys.exit(0)
+      
     # Check if defined "--update" option.        
     if menu.options.update:
       update.updater()
@@ -124,10 +132,14 @@ def main():
             for j in range(0,len(split_first_letter)):
               if split_first_letter[j] in settings.AVAILABLE_TECHNIQUES:
                 found_tech = True
-          if split_techniques_names[i].replace(' ', '') not in settings.AVAILABLE_TECHNIQUES and found_tech == False:
-            print Back.RED + settings.ERROR_SIGN + "You specified wrong '" + split_techniques_names[i] + "' injection technique." + Style.RESET_ALL
-            print Back.RED + "(x) The available techniques are: classic,eval-based,time-based,file-based or c,e,t,f (with or without commas)." + Style.RESET_ALL
-            sys.exit(0)
+              else:  
+                found_tech = False            
+      if split_techniques_names[i].replace(' ', '') not in settings.AVAILABLE_TECHNIQUES and found_tech == False:
+        error_msg = "You specified wrong value '" + split_techniques_names[i] + "' as injection technique. " \
+                    "The value, must be a string composed by the letters (C)lassic, (E)val-based, " \
+                    "(T)ime-based, (F)ile-based (with or without commas)."
+        print Back.RED + settings.ERROR_SIGN + error_msg + Style.RESET_ALL
+        sys.exit(0)
 
     # Cookie Injection
     if menu.options.cookie and settings.INJECT_TAG in menu.options.cookie:
@@ -170,17 +182,23 @@ def main():
   
     # Check if defined "--url" option.
     if menu.options.url:
-      url = menu.options.url
 
-      # If URL not starts with any URI scheme, add "http://"
-      if not urlparse.urlparse(url).scheme:
-        url = "http://" + url
+      url = menu.options.url
+      
+      # Check if http / https
+      url = checks.check_http_s(url)
 
       if menu.options.output_dir:
         output_dir = menu.options.output_dir
       else:
         output_dir = settings.OUTPUT_DIR
-      dir = os.path.dirname(output_dir)
+      
+      # One directory up, if Windows or if the script is being run under "/src".
+      if settings.IS_WINDOWS or "/src" in os.path.dirname(os.path.abspath(__file__)):
+        os.chdir("..")
+
+      output_dir = os.path.dirname(output_dir)
+      
       try:
         os.stat(output_dir)
       except:
@@ -220,24 +238,40 @@ def main():
         
         html_data = response.read()
         content = response.read()
+
         print "[ " + Fore.GREEN + "SUCCEED" + Style.RESET_ALL + " ]"
+
+        # Used a valid pair of valid credentials
+        if menu.options.auth_cred:
+          print Style.BRIGHT + "(!) Identified a valid pair of credentials '" + Style.UNDERLINE  + menu.options.auth_cred + Style.RESET_ALL + Style.BRIGHT  + "'." + Style.RESET_ALL
+
         try:
           if response.info()['server'] :
             server_banner = response.info()['server']
             found_os_server = False
+            if menu.options.os and checks.user_defined_os():
+              user_defined_os = settings.TARGET_OS
+
             for i in range(0,len(settings.SERVER_OS_BANNERS)):
               if settings.SERVER_OS_BANNERS[i].lower() in server_banner.lower():
                 found_os_server = True
                 settings.TARGET_OS = settings.SERVER_OS_BANNERS[i].lower()
                 if settings.TARGET_OS == "win" or settings.TARGET_OS == "microsoft" :
                   identified_os = "Windows"
+                  if menu.options.os and user_defined_os != "win":
+                    if not checks.identified_os():
+                      settings.TARGET_OS = user_defined_os
+
                   settings.TARGET_OS = identified_os[:3].lower()
                   if menu.options.shellshock:
-                    print Back.RED + settings.CRITICAL_SIGN + "The shellshock module is not available for " + identified_os + " tagets." + Style.RESET_ALL
+                    print Back.RED + settings.CRITICAL_SIGN + "The shellshock module is not available for " + identified_os + " targets." + Style.RESET_ALL
                     raise SystemExit()
                 else:
                   identified_os = "Unix-like (" + settings.TARGET_OS + ")"
-            
+                  if menu.options.os and user_defined_os == "win":
+                    if not checks.identified_os():
+                      settings.TARGET_OS = user_defined_os
+
             found_server_banner = False
             for i in range(0,len(settings.SERVER_BANNERS)):
               if settings.SERVER_BANNERS[i].lower() in server_banner.lower():
@@ -263,7 +297,7 @@ def main():
             # Check for wrong flags.
             if settings.TARGET_OS == "win":
               if menu.options.is_root :
-                print Fore.YELLOW + settings.WARNING_SIGN + "Swithing '--is-root' to '--is-admin' because the taget has been identified as windows." + Style.RESET_ALL 
+                print Fore.YELLOW + settings.WARNING_SIGN + "Swithing '--is-root' to '--is-admin' because the target has been identified as windows." + Style.RESET_ALL 
               error_msg = settings.WARNING_SIGN + "The '--passwords' option, is not yet available for Windows targets."
               if menu.options.passwords:
                 print Fore.YELLOW + settings.WARNING_SIGN + "The '--passwords' option, is not yet available for Windows targets." + Style.RESET_ALL   
@@ -272,9 +306,10 @@ def main():
                 sys.exit(0)
             else: 
               if menu.options.is_admin : 
-                print Fore.YELLOW + settings.WARNING_SIGN + "Swithing the '--is-admin' to '--is-root' because the taget has been identified as unix-like. " + Style.RESET_ALL   
+                print Fore.YELLOW + settings.WARNING_SIGN + "Swithing the '--is-admin' to '--is-root' because the target has been identified as unix-like. " + Style.RESET_ALL   
             
-            if found_os_server == False:
+            if found_os_server == False and \
+               not menu.options.os:
               # If "--shellshock" option is provided then,
               # by default is a Linux/Unix operating system.
               if menu.options.shellshock:
@@ -285,7 +320,7 @@ def main():
                   got_os = raw_input(settings.QUESTION_SIGN + "Do you recognise the server's operating system? [(W)indows/(U)nix/(q)uit] > ").lower()
                   if got_os.lower() in settings.CHOISE_OS :
                     if got_os.lower() == "w":
-                      settings.TARGET_OS == "win"
+                      settings.TARGET_OS = "win"
                       break
                     elif got_os.lower() == "u":
                       break
@@ -296,8 +331,12 @@ def main():
                       got_os = "enter"
                     print Back.RED + settings.ERROR_SIGN + "'" + got_os + "' is not a valid answer." + Style.RESET_ALL + "\n"
                     pass
-            if found_server_banner == False :
-              print  Fore.YELLOW + settings.WARNING_SIGN + "The server which was identified as " + server_banner + " seems unknown." + Style.RESET_ALL
+
+            if not menu.options.os:
+              if found_server_banner == False:
+                print  Fore.YELLOW + settings.WARNING_SIGN + "The server which was identified as " + server_banner + " seems unknown." + Style.RESET_ALL
+          else:
+            found_os_server = checks.user_defined_os()
         except KeyError:
           pass
 
@@ -317,27 +356,74 @@ def main():
           else:
             if menu.options.verbose:
               print Style.BRIGHT + "(!) The indicated web-page charset appears to be "  + Style.UNDERLINE  + settings.CHARSET + Style.RESET_ALL + "." + Style.RESET_ALL
-
+        
       except urllib2.HTTPError, e:
-        print "[ " + Fore.RED + "FAILED" + Style.RESET_ALL + " ]"
         # Check the codes of responses
         if e.getcode() == 500:
+          print "[ " + Fore.RED + "FAILED" + Style.RESET_ALL + " ]"
           content = e.read()
           sys.exit(0)
 
+        # Check for Authorization type.
         elif e.getcode() == 401:
-          if menu.options.auth_type != "basic":
-            print Back.RED + settings.ERROR_SIGN + "Only 'Basic' Access Authentication is supported." + Style.RESET_ALL
-            sys.exit(0)
+          print "[ " + Fore.GREEN + "SUCCEED" + Style.RESET_ALL + " ]"
+          authline = e.headers.get('www-authenticate', '').split()[0]
+
+          # Check for stored auth credentials.
+          if not menu.options.auth_cred:
+            stored_auth_creds = session_handler.export_valid_credentials(url, authline.lower())
+            if stored_auth_creds:
+              menu.options.auth_cred = stored_auth_creds
+              print Style.BRIGHT + "(!) Identified a valid pair of credentials '" + Style.UNDERLINE  + menu.options.auth_cred + Style.RESET_ALL + Style.BRIGHT  + "'." + Style.RESET_ALL
+            else:  
+              if authline.lower() == "basic":
+                if not menu.options.auth_type or menu.options.auth_type != "basic":
+                  menu.options.auth_type = "basic"
+
+                if not menu.options.ignore_401:
+                  #if not menu.options.auth_cred:
+                  print Fore.YELLOW + settings.WARNING_SIGN + "(" + menu.options.auth_type.capitalize() + ")" + " HTTP authentication credentials are required." + Style.RESET_ALL
+                  while True:
+                    crack_cred = raw_input(settings.QUESTION_SIGN + "Do you want to perform a dictionary-based attack? [Y/n/q] > ").lower()
+                    
+                    if crack_cred in settings.CHOISE_YES:
+                      auth_creds = authentication.http_basic(url)
+                      if auth_creds != False:
+                        menu.options.auth_cred = auth_creds
+                        settings.REQUIRED_AUTHENTICATION = True
+                        break
+                      else:
+                        sys.exit(0)
+
+                    elif crack_cred in settings.CHOISE_NO:
+                      error_msg = "Use the '--auth-cred' option to provide a valid pair of " 
+                      error_msg += "HTTP authentication credentials (i.e --auth-cred=\"admin:admin\")" 
+                      error_msg += " or use the '--ignore-401' option to ignore HTTP error 401 (Unauthorized)" 
+                      error_msg += " and continue tests without providing valid credentials."
+                      print Back.RED + settings.ERROR_SIGN + error_msg + Style.RESET_ALL
+                      sys.exit(0)
+
+                    elif crack_cred in settings.CHOISE_QUIT:
+                      sys.exit(0)
+
+                    else:
+                      if crack_cred == "":
+                        crack_cred = "enter"
+                      print Back.RED + settings.ERROR_SIGN + "'" + crack_cred + "' is not a valid answer." + Style.RESET_ALL + "\n"
+                      pass
+              else:
+                print Back.RED + settings.ERROR_SIGN + "The identified HTTP authentication type (" + authline + ") is not yet supported." + Style.RESET_ALL + "\n"
+                sys.exit(0)
           else:
-            print Back.RED + settings.ERROR_SIGN + "Authorization required!" + Style.RESET_ALL
-            sys.exit(0)
-          
+            pass
+
         elif e.getcode() == 403:
+          print "[ " + Fore.RED + "FAILED" + Style.RESET_ALL + " ]"
           print Back.RED + settings.ERROR_SIGN + "You don't have permission to access this page." + Style.RESET_ALL
           sys.exit(0)
           
         elif e.getcode() == 404:
+          print "[ " + Fore.RED + "FAILED" + Style.RESET_ALL + " ]"
           print Back.RED + settings.ERROR_SIGN + "The host seems to be down!" + Style.RESET_ALL
           sys.exit(0)
 
@@ -367,12 +453,16 @@ def main():
     if settings.SHOW_LOGS_MSG == True:
       logs.logs_notification(filename)
     print ""
+    if menu.options.url:
+      session_handler.clear(menu.options.url)
     sys.exit(0)
 
   except SystemExit: 
     if settings.SHOW_LOGS_MSG == True:
       logs.logs_notification(filename)
     print ""
+    if menu.options.url:
+      session_handler.clear(menu.options.url)
     sys.exit(0)
   
   # Accidental stop / restart of the target host server.
@@ -386,6 +476,7 @@ def main():
       sys.exit(0)      
     else: 
       print Back.RED + settings.ERROR_SIGN + e.line + e.message + Style.RESET_ALL + "\n"
+    session_handler.clear(url)  
     sys.exit(0)
 
   # Connection reset by peer
@@ -397,6 +488,7 @@ def main():
     if settings.SHOW_LOGS_MSG == True:
       logs.logs_notification(filename)
     print ""
+    session_handler.clear(url)
     sys.exit(0)
     
 if __name__ == '__main__':

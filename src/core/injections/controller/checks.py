@@ -14,9 +14,11 @@ the Free Software Foundation, either version 3 of the License, or
 For more see the file 'readme/COPYING' for copying permission.
 """
 
+import re
 import os
 import sys
 import urllib
+import urlparse
 
 from src.utils import menu
 from src.utils import settings
@@ -83,9 +85,22 @@ def check_reverse_tcp_options(reverse_tcp_option):
 Ignore error messages and continue the tests.
 """
 def continue_tests(err):
+  # If defined "--ignore-401" option, ignores HTTP Error 401 (Unauthorized) 
+  # and continues tests without providing valid credentials.
+  if menu.options.ignore_401:
+    settings.WAF_ENABLED = True
+    return True
+
+  # Possible WAF/IPS/IDS
+  if (str(err.code) == "403" or "406") and \
+    not menu.options.skip_waf:
+    # Check if "--skip-waf" option is defined 
+    # that skips heuristic detection of WAF/IPS/IDS protection.
+    settings.WAF_ENABLED = True
+    print Fore.YELLOW + settings.WARNING_SIGN + "It seems that target is protected by some kind of WAF/IPS/IDS." + Style.RESET_ALL
   try:
     while True:
-      continue_tests = raw_input(settings.QUESTION_SIGN + "Do you want to ignore the error (" +str(err.code)+ ") message and continue the tests? [Y/n/q] > ").lower()
+      continue_tests = raw_input(settings.QUESTION_SIGN + "Do you want to ignore the error (" + str(err.code) + ") message and continue the tests? [Y/n/q] > ").lower()
       if continue_tests in settings.CHOISE_YES:
         return True
       elif continue_tests in settings.CHOISE_NO:
@@ -105,14 +120,12 @@ def continue_tests(err):
 Check if option is unavailable
 """
 def unavailable_option(check_option):
-
   print Fore.YELLOW + settings.WARNING_SIGN + "The '" +check_option+ "' option is not yet available for windows targets." + Style.RESET_ALL   
 
 """
 Transformation of separators if time-based injection
 """
 def time_based_separators(separator, http_request_method):
-
   if separator == "||"  or separator == "&&" :
     separator = separator[:1]
     if http_request_method == "POST":
@@ -120,10 +133,10 @@ def time_based_separators(separator, http_request_method):
   return separator
 
 """
-Information message if platform does not have GNU 'readline' module installed
+Information message if platform does not have 
+GNU 'readline' module installed.
 """
 def no_readline_module():
-
   info_msg =  settings.WARNING_SIGN + "It seems that your platform does not have GNU 'readline' module installed."
   info_msg += " For tab-completion support in your shell, download the"
   if settings.IS_WINDOWS:
@@ -171,5 +184,103 @@ def ps_check_failed():
         ps_check = "enter"
       print Back.RED + settings.ERROR_SIGN + "'" + ps_check + "' is not a valid answer." + Style.RESET_ALL + "\n"
       pass
+
+"""
+Check if http / https.
+"""
+def check_http_s(url):
+  if urlparse.urlparse(url).scheme:
+    if menu.options.force_ssl and urlparse.urlparse(url).scheme != "https":
+      url = re.sub("\Ahttp:", "https:", url, re.I)
+  else:
+    if menu.options.force_ssl:
+      url = "https://" + url
+    else:
+      url = "http://" + url
+  return url
+
+"""
+Force the user-defined operating system name.
+"""
+def user_defined_os():
+  if menu.options.os:
+    if menu.options.os.lower() == "windows" or \
+       menu.options.os[:1].lower() == "w":
+      settings.TARGET_OS = "win"
+      return True
+    elif menu.options.os.lower() == "unix" or \
+       menu.options.os[:1].lower() == "u":
+      return True
+    else:
+      error_msg = "You specified wrong value '" + menu.options.os + "' as an operation system. " \
+                  "The value, must be (W)indows or (U)nix."
+      print Back.RED + settings.ERROR_SIGN + error_msg + Style.RESET_ALL
+      sys.exit(0)
+
+"""
+Decision if the user-defined operating system name, 
+is different than the one identified by heuristics.
+"""
+def identified_os():
+    warning_msg = "Heuristics have identified different operating system (" + \
+                   settings.TARGET_OS + ") than that you have provided." 
+    print Fore.YELLOW + settings.WARNING_SIGN + warning_msg + Style.RESET_ALL 
+    proceed_option = raw_input(settings.QUESTION_SIGN + "How do you want to proceed? [(C)ontinue/(s)kip/(q)uit] > ").lower()
+    if proceed_option.lower() in settings.CHOISE_PROCEED :
+      if proceed_option.lower() == "s":
+        return False
+      elif proceed_option.lower() == "c":
+        return True
+      elif proceed_option.lower() == "q":
+        raise SystemExit()
+    else:
+      if proceed_option == "":
+        proceed_option = "enter"
+      print Back.RED + settings.ERROR_SIGN + "'" + proceed_option + "' is not a valid answer." + Style.RESET_ALL + "\n"
+      pass
+
+"""
+Check for third-party (non-core) libraries.
+"""
+def third_party_dependencies():
+  sys.stdout.write(settings.INFO_SIGN + "Checking for third-party (non-core) libraries... ")
+  sys.stdout.flush()
+  
+  try:
+    import sqlite3
+  except ImportError:
+    print "[" + Fore.RED + " FAILED " + Style.RESET_ALL + "]"
+    error_msg = settings.APPLICATION + " requires 'sqlite3' third-party library "
+    error_msg += "in order to store previous injection points and commands. "
+    print Back.RED + settings.ERROR_SIGN + error_msg + Style.RESET_ALL
+    sys.exit(0)
+
+  try:
+    import readline
+  except ImportError:
+    if settings.IS_WINDOWS:
+      try:
+        import pyreadline
+      except ImportError:
+        print "[" + Fore.RED + " FAILED " + Style.RESET_ALL + "]"
+        error_msg = settings.APPLICATION + " requires 'pyreadline' third-party library "
+        error_msg += "in order to be able to take advantage of the TAB "
+        error_msg += "completion and history support features. "
+        print Back.RED + settings.ERROR_SIGN + error_msg + Style.RESET_ALL 
+        sys.exit(0)
+    else:
+      try:
+        import gnureadline
+      except ImportError:
+        print "[" + Fore.RED + " FAILED " + Style.RESET_ALL + "]"
+        error_msg = settings.APPLICATION + " requires 'gnureadline' third-party library "
+        error_msg += "in order to be able to take advantage of the TAB "
+        error_msg += "completion and history support features. "
+        print Back.RED + settings.ERROR_SIGN + error_msg + Style.RESET_ALL
+    pass
+
+  print "[" + Fore.GREEN + " SUCCEED " + Style.RESET_ALL + "]"
+  info_msg = "All required third-party (non-core) libraries are seems to be installed."
+  print Style.BRIGHT + "(!) " + info_msg + Style.RESET_ALL
 
 #eof

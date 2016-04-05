@@ -3,7 +3,7 @@
 	  /'___\ / __`\ /' __` __`\ /' __` __`\/\ \ /\ \/'\
 	 /\ \__//\ \L\ \/\ \/\ \/\ \/\ \/\ \/\ \ \ \\/>  </
 	 \ \____\ \____/\ \_\ \_\ \_\ \_\ \_\ \_\ \_\/\_/\_\
-	  \/____/\/___/  \/_/\/_/\/_/\/_/\/_/\/_/\/_/\//\/_/ { v0.3b }
+	  \/____/\/___/  \/_/\/_/\/_/\/_/\/_/\/_/\/_/\//\/_/ { v0.7b }
 
 	+--
 	Automated All-in-One OS Command Injection and Exploitation Tool
@@ -17,15 +17,15 @@
 
 #### General Information
 
-Commix (short for [comm]and [i]njection e[x]ploiter) has a simple environment and it can be used, from web developers, penetration testers or even security researchers to test web applications with the view to find bugs, errors or vulnerabilities related to command injection attacks. By using this tool, it is very easy to find and exploit a command injection vulnerability in a certain vulnerable parameter or string. Commix is written in Python programming language.
+**Commix** (short for [**comm**]and [**i**]njection e[**x**]ploiter) has a simple environment and it can be used, from web developers, penetration testers or even security researchers to test web applications with the view to find bugs, errors or vulnerabilities related to **[command injection](https://www.owasp.org/index.php/Command_Injection)** attacks. By using this tool, it is very easy to find and exploit a command injection vulnerability in a certain vulnerable parameter or string. Commix is written in Python programming language.
 
 #### Disclaimer
 
-The tool is only for testing and academic purposes and can only be used where strict consent has been given. Do not use it for illegal purposes!!
+The tool is only for testing and academic purposes and can only be used where strict consent has been given. Do not use it for illegal purposes!
 
 #### Requirements
 
-[Python](http://www.python.org/download/) version **2.6.x** or **2.7.x** is required for running this program.
+**[Python](http://www.python.org/download/)** version **2.6.x** or **2.7.x** is required for running this program.
 
 #### Installation
 
@@ -38,13 +38,13 @@ Commix comes packaged on the **official repositories** of the following Linux di
 - [ArchAssault](https://archassault.org/)
 - [BlackArch](http://blackarch.org/)
 - [Kali Linux](https://www.kali.org/)
+- [Weakerthan](http://www.weaknetlabs.com/)
 
 Commix also comes **pre-installed**, on the following penetration testing frameworks:
 
-- [CTF-Tools](https://github.com/zardus/ctf-tools)
 - [The Penetration Testers Framework (PTF)](https://github.com/trustedsec/ptf)
+- [CTF-Tools](https://github.com/zardus/ctf-tools)
 - [PentestBox](https://tools.pentestbox.com/)
-- [Weakerthan](http://www.weaknetlabs.com/)
 
 #### Usage
 

