@@ -30,11 +30,11 @@ Procced to the next attack vector.
 def next_attack_vector(technique, go_back):
   while True:
     next_attack_vector = raw_input(settings.QUESTION_SIGN + "Continue with testing the " + technique + "? [Y/n/q] > ").lower()
-    if next_attack_vector in settings.CHOISE_YES:
+    if next_attack_vector in settings.CHOICE_YES:
       return True
-    elif next_attack_vector in settings.CHOISE_NO:
+    elif next_attack_vector in settings.CHOICE_NO:
       return  False
-    elif next_attack_vector in settings.CHOISE_QUIT:
+    elif next_attack_vector in settings.CHOICE_QUIT:
       sys.exit(0)
     else:
       if next_attack_vector == "":
@@ -101,11 +101,11 @@ def continue_tests(err):
   try:
     while True:
       continue_tests = raw_input(settings.QUESTION_SIGN + "Do you want to ignore the error (" + str(err.code) + ") message and continue the tests? [Y/n/q] > ").lower()
-      if continue_tests in settings.CHOISE_YES:
+      if continue_tests in settings.CHOICE_YES:
         return True
-      elif continue_tests in settings.CHOISE_NO:
+      elif continue_tests in settings.CHOICE_NO:
         return False
-      elif continue_tests in settings.CHOISE_QUIT:
+      elif continue_tests in settings.CHOICE_QUIT:
         return False
       else:
         if continue_tests == "":
@@ -154,12 +154,12 @@ def ps_check():
     print Fore.YELLOW + info_msg + Style.RESET_ALL
     while True:
       ps_check = raw_input(settings.QUESTION_SIGN + "Do you want to use the \"--ps-version\" option so ensure that PowerShell is enabled? [Y/n/q] > ").lower()
-      if ps_check in settings.CHOISE_YES:
+      if ps_check in settings.CHOICE_YES:
         menu.options.ps_version = True
         break
-      elif ps_check in settings.CHOISE_NO:
+      elif ps_check in settings.CHOICE_NO:
         break
-      elif ps_check in settings.CHOISE_QUIT:
+      elif ps_check in settings.CHOICE_QUIT:
         print ""
         os._exit(0)
       else:  
@@ -174,9 +174,9 @@ If PowerShell is disabled.
 def ps_check_failed():
   while True:
     ps_check = raw_input(settings.QUESTION_SIGN + "Do you want to ignore the above warning and continue the procedure? [Y/n] > ").lower()
-    if ps_check in settings.CHOISE_YES:
+    if ps_check in settings.CHOICE_YES:
       break
-    elif ps_check in settings.CHOISE_NO:
+    elif ps_check in settings.CHOICE_NO:
       print ""
       os._exit(0)
     else:  
@@ -226,7 +226,7 @@ def identified_os():
                    settings.TARGET_OS + ") than that you have provided." 
     print Fore.YELLOW + settings.WARNING_SIGN + warning_msg + Style.RESET_ALL 
     proceed_option = raw_input(settings.QUESTION_SIGN + "How do you want to proceed? [(C)ontinue/(s)kip/(q)uit] > ").lower()
-    if proceed_option.lower() in settings.CHOISE_PROCEED :
+    if proceed_option.lower() in settings.CHOICE_PROCEED :
       if proceed_option.lower() == "s":
         return False
       elif proceed_option.lower() == "c":
@@ -282,5 +282,64 @@ def third_party_dependencies():
   print "[" + Fore.GREEN + " SUCCEED " + Style.RESET_ALL + "]"
   info_msg = "All required third-party (non-core) libraries are seems to be installed."
   print Style.BRIGHT + "(!) " + info_msg + Style.RESET_ALL
+
+"""
+Print the authentiation error message.
+"""
+def http_auth_error_msg():
+  error_msg = "Use the '--auth-cred' option to provide a valid pair of " 
+  error_msg += "HTTP authentication credentials (i.e --auth-cred=\"admin:admin\")" 
+  error_msg += " or use the '--ignore-401' option to ignore HTTP error 401 (Unauthorized)" 
+  error_msg += " and continue tests without providing valid credentials."
+  print Back.RED + settings.ERROR_SIGN + error_msg + Style.RESET_ALL 
+  sys.exit(0)
+
+"""
+Decision if the user-defined HTTP authenticatiob type, 
+is different than the one identified by heuristics.
+"""
+def identified_http_auth_type(auth_type):
+  warning_msg = "Heuristics have identified different HTTP authentication type (" 
+  warning_msg += auth_type.lower() + ") than that you have provided ("
+  warning_msg += menu.options.auth_type + ")." 
+  print Fore.YELLOW + settings.WARNING_SIGN + warning_msg + Style.RESET_ALL 
+  proceed_option = raw_input(settings.QUESTION_SIGN + "How do you want to proceed? [(C)ontinue/(s)kip/(q)uit] > ").lower()
+  if proceed_option.lower() in settings.CHOICE_PROCEED :
+    if proceed_option.lower() == "s":
+      return False
+    elif proceed_option.lower() == "c":
+      return True
+    elif proceed_option.lower() == "q":
+      raise SystemExit()
+  else:
+    if proceed_option == "":
+      proceed_option = "enter"
+    print Back.RED + settings.ERROR_SIGN + "'" + proceed_option + "' is not a valid answer." + Style.RESET_ALL + "\n"
+    pass
+
+"""
+Retrieve everything from the supported enumeration options.
+"""
+def enable_all_enumeration_options():
+  # Retrieve current user name.
+  menu.options.current_user = True
+  # Retrieve current hostname.
+  menu.options.hostname = True
+  # Retrieve system information.
+  menu.options.sys_info = True
+  if settings.TARGET_OS == "win":
+    # Check if the current user have admin privileges.
+    menu.options.is_admin = True
+    # Retrieve PowerShell's version number.
+    menu.options.ps_version = True
+  else:
+    # Check if the current user have root privileges.
+    menu.options.is_root = True
+  # Retrieve system users.
+  menu.options.users = True
+  # Retrieve system users privileges.
+  menu.options.privileges = True
+  # Retrieve system users password hashes.
+  menu.options.passwords = True
 
 #eof

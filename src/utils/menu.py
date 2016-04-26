@@ -28,15 +28,15 @@ The commix's banner.
 """
 def banner():
   print """                                       __           
-   ___    ___     ___ ___     ___ ___ /\_\   __  _  
-  /'___\ / __`\ /' __` __`\ /' __` __`\/\ \ /\ \/'\   
- /\ \__//\ \L\ \/\ \/\ \/\ \/\ \/\ \/\ \ \ \\\/>  </  
- \ \____\ \____/\ \_\ \_\ \_\ \_\ \_\ \_\ \_\\/\_/\\_\\
-  \/____/\/___/  \/_/\/_/\/_/\/_/\/_/\/_/\/_/\//\/_/ { """ + Style.BRIGHT + Fore.RED + settings.VERSION  + settings.COMMIT_ID + Style.RESET_ALL + """ }
+   ___    ___     ___ ___     ___ ___ /\_\   __  _   
+  /'___\ / __`\ /' __` __`\ /' __` __`\/\ \ /\ \/'\  """ + Style.BRIGHT + Style.UNDERLINE  + Fore.LIGHTBLUE_EX + settings.VERSION  + settings.COMMIT_ID + Style.RESET_ALL + """
+ /\ \__//\ \L\ \/\ \/\ \/\ \/\ \/\ \/\ \ \ \\\/>  </
+ \ \____\ \____/\ \_\ \_\ \_\ \_\ \_\ \_\ \_\\/\_/\\_\\ 
+  \/____/\/___/  \/_/\/_/\/_/\/_/\/_/\/_/\/_/\//\/_/ (""" + Fore.LIGHTRED_EX  + settings.APPLICATION_TWITTER + Style.RESET_ALL + """) 
 
 +--
-""" + Style.BRIGHT + settings.DESCRIPTION + Style.RESET_ALL + """
-Copyright (c) """ + settings.YEAR + """ """ + settings.AUTHOR + """ (""" + settings.TWITTER + Style.RESET_ALL + """)
+""" + Style.BRIGHT + settings.DESCRIPTION_FULL + Style.RESET_ALL + """
+Copyright (c) """ + settings.YEAR + """ """ + settings.AUTHOR + Style.RESET_ALL + """ (""" + Fore.LIGHTRED_EX  + settings.AUTHOR_TWITTER + Style.RESET_ALL + """)
 +--
 """
 
@@ -189,7 +189,7 @@ request.add_option("--auth-data",
 request.add_option("--auth-type",
                 action="store",
                 dest="auth_type",
-                help="HTTP authentication type (e.g. 'Basic').")
+                help="HTTP authentication type (e.g. 'Basic' or 'Digest').")
 
 request.add_option("--auth-cred",
                 action="store",
@@ -211,6 +211,12 @@ request.add_option("--force-ssl",
 # Enumeration options
 enumeration = OptionGroup(parser, Style.BRIGHT + "Enumeration" + Style.RESET_ALL, 
                         "These options can be used to enumerate the target host.")
+
+enumeration.add_option("--all", 
+                action="store_true",
+                dest="enum_all",
+                default = False,
+                help="Retrieve everything.")
 
 enumeration.add_option("--current-user", 
                 action="store_true",

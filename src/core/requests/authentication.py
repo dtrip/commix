@@ -108,54 +108,76 @@ def authentication_process():
   return response 
 
 """
-Simple "Basic" HTTP Authentication cracker.
+Define the HTTP authentication 
+wordlists for usernames / passwords.
 """
-def http_basic(url):
-    authentication_type = "basic"
-    try:
-      usernames = []
-      if not os.path.isfile(settings.USERNAMES_TXT_FILE):
-        print Back.RED + settings.ERROR_SIGN + "The username file (" + settings.USERNAMES_TXT_FILE + ") is not found" + Style.RESET_ALL
-        sys.exit(0) 
-      if len(settings.USERNAMES_TXT_FILE) == 0:
-        print Back.RED + settings.ERROR_SIGN + "The " + settings.USERNAMES_TXT_FILE + " file is empty."
-        sys.exit(0)
-      with open(settings.USERNAMES_TXT_FILE, "r") as f: 
-        for line in f:
-          line = line.strip()
-          usernames.append(line)
-    except IOError: 
-      print Back.RED + settings.ERROR_SIGN + " Check if the " + settings.USERNAMES_TXT_FILE + " file is readable or corrupted."
+def define_wordlists():
+  try:
+    usernames = []
+    if not os.path.isfile(settings.USERNAMES_TXT_FILE):
+      print Back.RED + settings.ERROR_SIGN + "The username file (" + settings.USERNAMES_TXT_FILE + ") is not found" + Style.RESET_ALL
+      sys.exit(0) 
+    if len(settings.USERNAMES_TXT_FILE) == 0:
+      print Back.RED + settings.ERROR_SIGN + "The " + settings.USERNAMES_TXT_FILE + " file is empty."
       sys.exit(0)
+    with open(settings.USERNAMES_TXT_FILE, "r") as f: 
+      for line in f:
+        line = line.strip()
+        usernames.append(line)
+  except IOError: 
+    print Back.RED + settings.ERROR_SIGN + " Check if the " + settings.USERNAMES_TXT_FILE + " file is readable or corrupted."
+    sys.exit(0)
 
-    try:
-      passwords = []
-      if not os.path.isfile(settings.PASSWORDS_TXT_FILE):
-        print Back.RED + settings.ERROR_SIGN + "The password file (" + settings.PASSWORDS_TXT_FILE + ") is not found" + Style.RESET_ALL
-        sys.exit(0) 
-      if len(settings.PASSWORDS_TXT_FILE) == 0:
-        print Back.RED + settings.ERROR_SIGN + "The " + settings.PASSWORDS_TXT_FILE + " file is empty."
-        exit()
-      with open(settings.PASSWORDS_TXT_FILE, "r") as f: 
-        for line in f:
-          line = line.strip()
-          passwords.append(line)
-    except IOError: 
-      print Back.RED + settings.ERROR_SIGN + " Check if the " + settings.PASSWORDS_TXT_FILE + " file is readable or corrupted."
-      sys.exit(0)
+  try:
+    passwords = []
+    if not os.path.isfile(settings.PASSWORDS_TXT_FILE):
+      print Back.RED + settings.ERROR_SIGN + "The password file (" + settings.PASSWORDS_TXT_FILE + ") is not found" + Style.RESET_ALL
+      sys.exit(0) 
+    if len(settings.PASSWORDS_TXT_FILE) == 0:
+      print Back.RED + settings.ERROR_SIGN + "The " + settings.PASSWORDS_TXT_FILE + " file is empty."
+      exit()
+    with open(settings.PASSWORDS_TXT_FILE, "r") as f: 
+      for line in f:
+        line = line.strip()
+        passwords.append(line)
+  except IOError: 
+    print Back.RED + settings.ERROR_SIGN + " Check if the " + settings.PASSWORDS_TXT_FILE + " file is readable or corrupted."
+    sys.exit(0)
 
+  return usernames, passwords
+
+"""
+Simple Basic / Digest HTTP authentication cracker.
+"""
+def http_auth_cracker(url, realm):
+    # Define the HTTP authentication type.
+    authentication_type = menu.options.auth_type
+    # Define the authentication wordlists for usernames / passwords.
+    usernames, passwords = define_wordlists()
     i = 1 
     found = False
     total = len(usernames) * len(passwords)   
     for username in usernames:
       for password in passwords:
         float_percent = "{0:.1f}%".format(round(((i*100)/(total*1.0)),2))
+        # Check if verbose mode on
+        if menu.options.verbose:
+            sys.stdout.write(Fore.GREY + "(~) Checking: " + username + ":" + password + Style.RESET_ALL + "\n")
         try:
-          request = urllib2.Request(url)
-          base64string = base64.encodestring(username + ":" + password)[:-1]
-          request.add_header("Authorization", "Basic " + base64string)   
-          result = urllib2.urlopen(request)
-          # Store results to session 
+          # Basic authentication 
+          if authentication_type.lower() == "basic":
+            request = urllib2.Request(url)
+            base64string = base64.encodestring(username + ":" + password)[:-1]
+            request.add_header("Authorization", "Basic " + base64string)   
+            result = urllib2.urlopen(request)
+          # Digest authentication 
+          elif authentication_type.lower() == "digest":
+            authhandler = urllib2.HTTPDigestAuthHandler()
+            authhandler.add_password(realm, url, username, password)
+            opener = urllib2.build_opener(authhandler)
+            urllib2.install_opener(opener)
+            result = urllib2.urlopen(url)
+          # Store valid results to session 
           admin_panel = url 
           session_handler.import_valid_credentials(url, authentication_type, admin_panel, username, password)
           found = True
@@ -164,17 +186,22 @@ def http_basic(url):
         except:
           pass  
         if found:
-          float_percent = Fore.GREEN + "SUCCEED" + Style.RESET_ALL
+          if not menu.options.verbose:
+            float_percent = Fore.GREEN + "SUCCEED" + Style.RESET_ALL
         else:
           if str(float_percent) == "100.0%":
-            float_percent = Fore.RED + "FAILED" + Style.RESET_ALL
+            if not menu.options.verbose:
+              float_percent = Fore.RED + "FAILED" + Style.RESET_ALL
           else:  
             i = i + 1
-        sys.stdout.write("\r\r" + settings.INFO_SIGN + "Checking for a valid pair of credentials... [ " +  float_percent + " ]")
-        sys.stdout.flush()
+        if not menu.options.verbose:
+          sys.stdout.write("\r\r" + settings.INFO_SIGN + "Checking for a valid pair of credentials... [ " +  float_percent + " ]")
+          sys.stdout.flush()
         if found:
           valid_pair =  "" + username + ":" + password + ""
-          print Style.BRIGHT + "\n(!) Identified a valid pair of credentials '" + Style.UNDERLINE  + valid_pair + Style.RESET_ALL + Style.BRIGHT  + "'." + Style.RESET_ALL
+          if not menu.options.verbose:
+            print ""
+          print Style.BRIGHT + "(!) Identified a valid pair of credentials '" + Style.UNDERLINE  + valid_pair + Style.RESET_ALL + Style.BRIGHT  + "'." + Style.RESET_ALL
           return valid_pair
 
     error_msg = "Use the '--auth-cred' option to provide a valid pair of " 

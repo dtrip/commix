@@ -133,7 +133,7 @@ def cb_injection_handler(url, delay, filename, http_request_method):
 
               # Check if defined "--verbose" option.
               if menu.options.verbose:
-                print Fore.GREY + "(~) Payload: " + payload + Style.RESET_ALL
+                print Fore.GREY + settings.PAYLOAD_SIGN + payload + Style.RESET_ALL
                 
               # if need page reload
               if menu.options.url_reload:
@@ -264,12 +264,12 @@ def cb_injection_handler(url, delay, filename, http_request_method):
             if settings.ENUMERATION_DONE == True :
               while True:
                 enumerate_again = raw_input("\n" + settings.QUESTION_SIGN + "Do you want to enumerate again? [Y/n/q] > ").lower()
-                if enumerate_again in settings.CHOISE_YES:
+                if enumerate_again in settings.CHOICE_YES:
                   cb_enumeration.do_check(separator, TAG, prefix, suffix, whitespace, http_request_method, url, vuln_parameter, alter_shell, filename)
                   break
-                elif enumerate_again in settings.CHOISE_NO: 
+                elif enumerate_again in settings.CHOICE_NO: 
                   break
-                elif enumerate_again in settings.CHOISE_QUIT:
+                elif enumerate_again in settings.CHOICE_QUIT:
                   sys.exit(0)
                 else:
                   if enumerate_again == "":
@@ -287,12 +287,12 @@ def cb_injection_handler(url, delay, filename, http_request_method):
             if settings.FILE_ACCESS_DONE == True :
               while True:
                 file_access_again = raw_input(settings.QUESTION_SIGN + "Do you want to access files again? [Y/n/q] > ").lower()
-                if file_access_again in settings.CHOISE_YES:
+                if file_access_again in settings.CHOICE_YES:
                   cb_file_access.do_check(separator, TAG, prefix, suffix, whitespace, http_request_method, url, vuln_parameter, alter_shell, filename)
                   break
-                elif file_access_again in settings.CHOISE_NO: 
+                elif file_access_again in settings.CHOICE_NO: 
                   break
-                elif file_access_again in settings.CHOISE_QUIT:
+                elif file_access_again in settings.CHOICE_QUIT:
                   sys.exit(0)
                 else:
                   if file_access_again == "":
@@ -322,7 +322,7 @@ def cb_injection_handler(url, delay, filename, http_request_method):
                 if menu.options.verbose:
                   print ""
               gotshell = raw_input(settings.QUESTION_SIGN + "Do you want a Pseudo-Terminal shell? [Y/n/q] > ").lower()
-              if gotshell in settings.CHOISE_YES:
+              if gotshell in settings.CHOICE_YES:
                 print ""
                 print "Pseudo-Terminal (type '" + Style.BRIGHT + "?" + Style.RESET_ALL + "' for available options)"
                 if readline_error:
@@ -358,8 +358,6 @@ def cb_injection_handler(url, delay, filename, http_request_method):
                         settings.REVERSE_TCP = True
                         # Set up LHOST / LPORT for The reverse TCP connection.
                         reverse_tcp.configure_reverse_tcp()
-                        if settings.REVERSE_TCP == False:
-                          continue
                         if settings.REVERSE_TCP == False:
                           continue
                         while True:
@@ -417,7 +415,7 @@ def cb_injection_handler(url, delay, filename, http_request_method):
                   except SystemExit: 
                     raise
 
-              elif gotshell in settings.CHOISE_NO:
+              elif gotshell in settings.CHOICE_NO:
                 if checks.next_attack_vector(technique, go_back) == True:
                   break
                 else:
@@ -426,7 +424,7 @@ def cb_injection_handler(url, delay, filename, http_request_method):
                   else:
                     return True  
 
-              elif gotshell in settings.CHOISE_QUIT:
+              elif gotshell in settings.CHOICE_QUIT:
                 sys.exit(0)
 
               else:

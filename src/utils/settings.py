@@ -25,17 +25,25 @@ The global variables.
 
 # About
 APPLICATION = "commix"
-DESCRIPTION = "Automated All-in-One OS Command Injection and Exploitation Tool"
+DESCRIPTION_FULL = "Automated All-in-One OS Command Injection and Exploitation Tool"
+DESCRIPTION = "The command injection exploiter"
 AUTHOR  = "Anastasios Stasinopoulos"
-VERSION = "v0.7b"
+VERSION = "v0.8b"
 YEAR    = "2014-2016"
-TWITTER = "@ancst" 
+AUTHOR_TWITTER = "@ancst" 
+APPLICATION_TWITTER = "@commixproject" 
 
 # Inject Tag
 INJECT_TAG = "INJECT_HERE"
 
 # Default target host OS (Unix-like)
 TARGET_OS = "unix"
+
+# Exploitation techniques states
+CLASSIC_STATE = False
+EVAL_BASED_STATE = False
+TIME_BASED_STATE = False
+FILE_BASED_STATE = False
 
 # Check Commit ID
 if os.path.isdir("./.git"):
@@ -164,19 +172,19 @@ SHADOW_FILE = "/etc/shadow"
 SYS_PASSES = FILE_READ + SHADOW_FILE 
 
 # Accepts 'YES','YE','Y','yes','ye','y'
-CHOISE_YES = ['yes','ye','y']
+CHOICE_YES = ['yes','ye','y']
 
 # Accepts 'NO','N','no','n'
-CHOISE_NO = ['no','n']
+CHOICE_NO = ['no','n']
 
 # Accepts 'QUIT','Q','quit','q'
-CHOISE_QUIT = ['q','quit']
+CHOICE_QUIT = ['q','quit']
 
 # Accepts 'W','w','U','u','Q','q'
-CHOISE_OS = ['w','u','q']
+CHOICE_OS = ['w','u','q']
 
 # Accepts 'C','c','S','s','Q','q','a','A','n','N'
-CHOISE_PROCEED = ['c','s','q','a','n']
+CHOICE_PROCEED = ['c','s','q','a','n']
 
 # Available alternative shells
 AVAILABLE_SHELLS = ["python"]
@@ -373,5 +381,8 @@ USERNAMES_TXT_FILE = os.path.abspath(os.path.join(os.path.dirname(__file__), '..
 PASSWORDS_TXT_FILE = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'txt')) + "/" + "passwords_john.txt"
 
 REQUIRED_AUTHENTICATION = False
+
+# Supported HTTP Authentication types
+SUPPORTED_HTTP_AUTH_TYPES = [ "basic", "digest" ]
 
 #eof

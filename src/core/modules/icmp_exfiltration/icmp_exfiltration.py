@@ -90,7 +90,7 @@ def cmd_exec(http_request_method, cmd, url, vuln_parameter, ip_src):
   
   # Check if defined "--verbose" option.
   if menu.options.verbose:
-    sys.stdout.write("\n" + Fore.GREY + "(~) Payload: " + payload + Style.RESET_ALL)
+    sys.stdout.write("\n" + Fore.GREY + settings.PAYLOAD_SIGN + payload + Style.RESET_ALL)
 
   if http_request_method == "GET":
     url = url.replace(settings.INJECT_TAG, "")
@@ -127,7 +127,7 @@ def input_cmd(http_request_method, url, vuln_parameter, ip_src, technique):
     if go_back == True:
       break
     gotshell = raw_input("\n" + settings.QUESTION_SIGN + "Do you want a Pseudo-Terminal shell? [Y/n/q] > ").lower()
-    if gotshell in settings.CHOISE_YES:
+    if gotshell in settings.CHOICE_YES:
       print "\nPseudo-Terminal (type '" + Style.BRIGHT + "?" + Style.RESET_ALL + "' for available options)"
       if readline_error:
         checks.no_readline_module()
@@ -166,11 +166,11 @@ def input_cmd(http_request_method, url, vuln_parameter, ip_src, technique):
           print ""
           os._exit(0)
 
-    elif gotshell in settings.CHOISE_NO:
+    elif gotshell in settings.CHOICE_NO:
       print ""
       os._exit(0)
 
-    elif gotshell in settings.CHOISE_QUIT:
+    elif gotshell in settings.CHOICE_QUIT:
       print ""
       os._exit(0)
 
@@ -197,7 +197,7 @@ def exploitation(ip_dst, ip_src, url, http_request_method, vuln_parameter, techn
 def icmp_exfiltration_handler(url, http_request_method):
   # You need to have root privileges to run this script
   if os.geteuid() != 0:
-    print "\n" + Back.RED + settings.ERROR_SIGN + "You need to have root privileges to run this option." + Style.RESET_ALL
+    print Back.RED + settings.ERROR_SIGN + "You need to have root privileges to run this option." + Style.RESET_ALL + "\n"
     os._exit(0)
 
   if http_request_method == "GET":

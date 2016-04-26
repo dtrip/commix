@@ -130,12 +130,16 @@ def fb_injection_handler(url, delay, filename, http_request_method, url_time_res
   else:
     tmp_path = settings.TMP_PATH
 
+  if settings.SRV_ROOT_DIR != "":
+    settings.SRV_ROOT_DIR = ""
+
   if menu.options.file_dest and '/tmp/' in menu.options.file_dest:
     call_tmp_based = True
   else:
     if menu.options.srv_root_dir:
       settings.SRV_ROOT_DIR = menu.options.srv_root_dir
     else:
+
       # Debian/Ubunt have been updated to use /var/www/html as default instead of /var/www.
       if "apache" in settings.SERVER_BANNER.lower():
         if "debian" or "ubuntu" in settings.SERVER_BANNER.lower():
@@ -316,7 +320,7 @@ def fb_injection_handler(url, delay, filename, http_request_method, url_time_res
                     print ""
                     while True:
                       tmp_upload = raw_input(settings.QUESTION_SIGN + "Do you want to try the temporary directory (" + tmp_path + ") [Y/n/q] > ").lower()
-                      if tmp_upload in settings.CHOISE_YES:
+                      if tmp_upload in settings.CHOICE_YES:
                         exit_loops = True
                         call_tfb = tfb_controller(no_result, url, delay, filename, tmp_path, http_request_method, url_time_response)
                         if call_tfb != False:
@@ -326,9 +330,9 @@ def fb_injection_handler(url, delay, filename, http_request_method, url_time_res
                             return False
                           else:
                             return True
-                      elif tmp_upload in settings.CHOISE_NO:
+                      elif tmp_upload in settings.CHOICE_NO:
                         break
-                      elif tmp_upload in settings.CHOISE_QUIT:
+                      elif tmp_upload in settings.CHOICE_QUIT:
                         print ""
                         raise
                       else:
@@ -457,12 +461,12 @@ def fb_injection_handler(url, delay, filename, http_request_method, url_time_res
           if settings.ENUMERATION_DONE == True :
             while True:
               enumerate_again = raw_input("\n" + settings.QUESTION_SIGN + "Do you want to enumerate again? [Y/n/q] > ").lower()
-              if enumerate_again in settings.CHOISE_YES:
+              if enumerate_again in settings.CHOICE_YES:
                 fb_enumeration.do_check(separator, payload, TAG, delay, prefix, suffix, http_request_method, url, vuln_parameter, OUTPUT_TEXTFILE, alter_shell, filename)
                 break
-              elif enumerate_again in settings.CHOISE_NO: 
+              elif enumerate_again in settings.CHOICE_NO: 
                 break
-              elif file_access_again in settings.CHOISE_QUIT:
+              elif file_access_again in settings.CHOICE_QUIT:
                 # Delete previous shell (text) files (output)
                 delete_previous_shell(separator, payload, TAG, prefix, suffix, http_request_method, url, vuln_parameter, OUTPUT_TEXTFILE, alter_shell, filename)
                 sys.exit(0)
@@ -482,12 +486,12 @@ def fb_injection_handler(url, delay, filename, http_request_method, url_time_res
           if settings.FILE_ACCESS_DONE == True :
             while True:
               file_access_again = raw_input(settings.QUESTION_SIGN + "Do you want to access files again? [Y/n/q] > ").lower()
-              if file_access_again in settings.CHOISE_YES:
+              if file_access_again in settings.CHOICE_YES:
                 fb_file_access.do_check(separator, payload, TAG, delay, prefix, suffix, http_request_method, url, vuln_parameter, OUTPUT_TEXTFILE, alter_shell, filename)
                 break
-              elif file_access_again in settings.CHOISE_NO: 
+              elif file_access_again in settings.CHOICE_NO: 
                 break
-              elif file_access_again in settings.CHOISE_QUIT:
+              elif file_access_again in settings.CHOICE_QUIT:
                 # Delete previous shell (text) files (output)
                 delete_previous_shell(separator, payload, TAG, prefix, suffix, http_request_method, url, vuln_parameter, OUTPUT_TEXTFILE, alter_shell, filename)
                 sys.exit(0)
@@ -522,7 +526,7 @@ def fb_injection_handler(url, delay, filename, http_request_method, url_time_res
               if go_back == True:
                 break
               gotshell = raw_input(settings.QUESTION_SIGN + "Do you want a Pseudo-Terminal? [Y/n/q] > ").lower()
-              if gotshell in settings.CHOISE_YES:
+              if gotshell in settings.CHOICE_YES:
                 print ""
                 print "Pseudo-Terminal (type '" + Style.BRIGHT + "?" + Style.RESET_ALL + "' for available options)"
                 if readline_error:
@@ -600,7 +604,7 @@ def fb_injection_handler(url, delay, filename, http_request_method, url_time_res
                         print ""
                       print Back.RED + settings.ERROR_SIGN + "The '" + cmd + "' command, does not return any output." + Style.RESET_ALL + "\n"
 
-              elif gotshell in settings.CHOISE_NO:
+              elif gotshell in settings.CHOICE_NO:
                 if checks.next_attack_vector(technique, go_back) == True:
                   break
                 else:
@@ -609,7 +613,7 @@ def fb_injection_handler(url, delay, filename, http_request_method, url_time_res
                   else:
                     return True  
 
-              elif gotshell in settings.CHOISE_QUIT:
+              elif gotshell in settings.CHOICE_QUIT:
                 # Delete previous shell (text) files (output)
                 delete_previous_shell(separator, payload, TAG, prefix, suffix, http_request_method, url, vuln_parameter, OUTPUT_TEXTFILE, alter_shell, filename)
                 sys.exit(0)
