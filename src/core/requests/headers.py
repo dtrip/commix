@@ -18,8 +18,10 @@ import re
 import sys
 import base64
 import urllib2
+
 from src.utils import menu
 from src.utils import settings
+from src.core.injections.controller import checks
 from src.thirdparty.colorama import Fore, Back, Style, init
 
 """
@@ -79,9 +81,9 @@ def do_check(request):
           except urllib2.HTTPError, e:
             pass
       except ValueError:
-        error_msg = "Unsupported / Invalid HTTP authentication type '" + menu.options.auth_type + "'."
-        error_msg += " Try basic or digest HTTP authentication type."
-        print Back.RED + settings.ERROR_SIGN + error_msg + Style.RESET_ALL
+        err_msg = "Unsupported / Invalid HTTP authentication type '" + menu.options.auth_type + "'."
+        err_msg += " Try basic or digest HTTP authentication type."
+        print settings.print_error_msg(err_msg)
         sys.exit(0)   
     else:
       pass        
@@ -92,6 +94,8 @@ def do_check(request):
 
   # Check if defined any extra HTTP headers.
   if menu.options.headers:
+    # Do replacement with the 'INJECT_HERE' tag, if the wildcard char is provided.
+    menu.options.headers = checks.wildcard_character(menu.options.headers)
     extra_headers = menu.options.headers
     extra_headers = extra_headers.split(":")
     extra_headers = ':'.join(extra_headers)
@@ -106,10 +110,11 @@ def do_check(request):
       http_header_value = re.findall(r":(.*)", extra_header)
       http_header_value = ''.join(http_header_value)
       # Check if it is a custom header injection.
-      if not settings.CUSTOM_HEADER_INJECTION and \
+      if settings.CUSTOM_HEADER_INJECTION == False and \
          settings.INJECT_TAG in http_header_value:
         settings.CUSTOM_HEADER_INJECTION = True
         settings.CUSTOM_HEADER_NAME = http_header_name
       request.add_header(http_header_name, http_header_value)
+
 
 #eof

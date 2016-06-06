@@ -1,4 +1,23 @@
-## Version 0.8b
+## Version 0.9b (upcoming)
+* Added: The ability to re-perform the injection request if it has failed.
+* Fixed: The shell output in semiblind ("file-based") technique has been fixed not to concat new lines.
+* Revised: The ability to execute multiple tamper scripts combined or the one after the other.
+* Added: New tamper script "space2plus.py" that replaces every space (" ") with plus ("+").
+* Added: New state ("checking") and the color of that state has been setted.
+* Replaced: The "--base64" option has been replaced with "base64encode.py" tamper script.
+* Added: New tamper script "space2ifs.py" that replaces every space (" ") with $IFS (bash) variable.
+* Added: New option "--tamper" that supports tamper injection scripts.
+* Added: Support for verbosity levels (currently supported levels: 0,1).
+* Fixed: Minor rearrangement of prefixes and separators has been implemented.
+* Revised: The "time-based" (blind) technique for *nix targets has been shortly revised.
+* Revised: The source code has been revised to support "print_state_msg" (i.e error, warning, success etc) functions.
+
+## Version 0.8b (2016-05-06)
+* Fixed: The "--file-read" option to ignore the carriage return ("\r") character in a text file.
+* Added: The ability to check for empty value(s) in the defined GET/POST/Cookie(s) data and skip.
+* Replaced: The "INJECT_HERE" tag has been replaced with the "*" (asterisk) wildcard character.
+* Added: New option "--level" (1-3) that specifies level of tests to perform.
+* Added: New option "-p" that specifies a comma-separated list of GET/POST parameter.
 * Added: The ability to check every parameter in the provided cookie data.
 * Added: The ability to check every GET parameter in the defined URL and/or every POST provided data.
 * Added: New option "--all" that enables all supported enumeration options.

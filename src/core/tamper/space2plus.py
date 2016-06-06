@@ -14,24 +14,18 @@ the Free Software Foundation, either version 3 of the License, or
 For more see the file 'readme/COPYING' for copying permission.
 """
 
-import sys
-
 from src.utils import settings
-from src.thirdparty.colorama import Fore, Back, Style, init
 
 """
-Show version number and exit.
+Replaces space character (' ') with plus ('+')
+Notes:
+  * This tamper script works against all targets.
 """
-def show_version():
-  print settings.VERSION + settings.COMMIT_ID
-  sys.exit(0)
 
-"""
-Check python version number.
-"""
-def python_version():
-  if settings.PYTHON_VERSION >= "3" or settings.PYTHON_VERSION < "2.6":
-    err_msg = "Incompatible Python version (" 
-    err_msg += settings.PYTHON_VERSION + ") detected."
-    print settings.print_error_msg(err_msg)
-    sys.exit(0)
+settings.TAMPER_SCRIPTS['space2plus'] = True
+if settings.WHITESPACE[0] == "%20" or settings.WHITESPACE[0] == " ":
+  settings.WHITESPACE[0] = "+"
+else:
+  settings.WHITESPACE.append("+") 
+
+#eof 

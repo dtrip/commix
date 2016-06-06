@@ -19,6 +19,8 @@ import sys
 import time
 import urllib
 
+from src.thirdparty.colorama import Fore, Back, Style, init
+
 """
 The global variables.
 """
@@ -28,7 +30,7 @@ APPLICATION = "commix"
 DESCRIPTION_FULL = "Automated All-in-One OS Command Injection and Exploitation Tool"
 DESCRIPTION = "The command injection exploiter"
 AUTHOR  = "Anastasios Stasinopoulos"
-VERSION = "v0.8b"
+VERSION = "v0.9b"
 YEAR    = "2014-2016"
 AUTHOR_TWITTER = "@ancst" 
 APPLICATION_TWITTER = "@commixproject" 
@@ -36,15 +38,25 @@ APPLICATION_TWITTER = "@commixproject"
 # Inject Tag
 INJECT_TAG = "INJECT_HERE"
 
+# The wildcard character
+WILDCARD_CHAR = "*"
+
+# Testable parameter(s) comma separated. 
+TEST_PARAMETER = ""
+
 # Default target host OS (Unix-like)
 TARGET_OS = "unix"
+
+# Verbosity level: 0-1 (default 0)
+VERBOSITY_LEVEL = 0
 
 # Exploitation techniques states
 CLASSIC_STATE = False
 EVAL_BASED_STATE = False
 TIME_BASED_STATE = False
 FILE_BASED_STATE = False
-
+TEMPFILE_BASED_STATE = False
+TIME_BASED_ATTACK = False
 # Check Commit ID
 if os.path.isdir("./.git"):
   with open('.git/refs/heads/master', 'r') as f:
@@ -82,10 +94,10 @@ TESTABLE_PARAMETER = ""
 HTTP_HEADER = ""
 
 # The command injection prefixes.
-PREFIXES = ["", "'", "\"", "&", "%26", "|", "%7C", "%27", "%22"] 
+PREFIXES = ["", " ", "'", "\"", "&", "%26", "|", "%7C", "%27", "%22"] 
 
 # The command injection separators.
-SEPARATORS = ["", " ", ";", "%3B", "&", "%26", "&&", "%26%26", "|", "%7C", "||", "%7C%7C", "%0a"]
+SEPARATORS = [";", "%3B", "&", "%26", "&&", "%26%26", "|", "%7C", "||", "%7C%7C", "%0a"]
 
 # The command injection suffixes.
 SUFFIXES = ["", "'", "\"", "#", "//", "\\\\", "&", "%26", "|", "%7C", "%27", "%22", "%5C%5C", "%2F%2F"]
@@ -106,16 +118,20 @@ EVAL_SEPARATORS = ["", ";", "%0a", "\\\\n"]
 EVAL_SUFFIXES = ["", "\\\\", "//", "#", ".\"", ".'", ")}"]
 
 # The white-spaces
-WHITESPACES = ["%20", "$IFS"]
+WHITESPACE = ["%20"]
 
 # Time delay
 DELAY = 1
+
+#Level (Default: 1)
+LEVEL = 1
 
 # Default Temp Directory
 TMP_PATH = ""
 
 # Default Server's Root Directory
 SRV_ROOT_DIR = ""
+DEFAULT_SRV_ROOT_DIR = ""
 CUSTOM_SRV_ROOT_DIR = False
 
 # The max help option length.
@@ -247,6 +263,9 @@ SET_OPTIONS = [
 # Cookie delimiter
 COOKIE_DELIMITER = ";"
 
+# Split parameter value
+PARAMETER_SPLITTING_REGEX = r'[,]'
+
 # Cookie delimiter
 PARAMETER_DELIMITER = "&"
 
@@ -320,7 +339,10 @@ FILE_ACCESS_AGAIN = False
 IS_JSON = False
 
 # JSON Symbols
-JSON_SYMBOLS = set("{}:'")
+JSON_RECOGNITION_REGEX = r'(?s)\A(\s*\[)*\s*\{.*"[^"]+"\s*:\s*("[^"]+"|\d+).*\}\s*(\]\s*)*\Z'
+
+# B64 format recognition
+BASE64_RECOGNITION_REGEX = r'^[A-Za-z0-9+/]+[=]{0,2}$'
 
 # TFB Decimal
 TFB_DECIMAL = False
@@ -353,6 +375,7 @@ FAILED_TRIES = 20
 PS_ENABLED = None
 
 # Status Signs
+SUCCESS_SIGN = "(!) "
 INFO_SIGN = "(*) "
 QUESTION_SIGN = "(?) "
 WARNING_SIGN = "(^) Warning: "
@@ -360,6 +383,7 @@ ERROR_SIGN = "(x) Error: "
 CRITICAL_SIGN = "(x) Critical: "
 ABORTION_SIGN = "(x) Aborted: "
 PAYLOAD_SIGN = "(~) Payload: "
+CHECK_SIGN = "(>) Checking "
 
 # Default LHOST / LPORT setup, 
 # for the reverse TCP connection
@@ -382,7 +406,65 @@ PASSWORDS_TXT_FILE = os.path.abspath(os.path.join(os.path.dirname(__file__), '..
 
 REQUIRED_AUTHENTICATION = False
 
+INJECTED_HTTP_HEADER = False
+INJECTION_CHECKER = False
+
 # Supported HTTP Authentication types
 SUPPORTED_HTTP_AUTH_TYPES = [ "basic", "digest" ]
+
+# HTTP Headers
+HTTP_HEADERS = [ "useragent", "referer" ]
+
+# Tamper scripts dict
+TAMPER_SCRIPTS = {
+                  "space2ifs": False,
+                  "base64encode": False,
+                  "space2plus": False
+                 }
+
+# Print error message
+def print_error_msg(err_msg):
+  result = Back.RED + ERROR_SIGN + str(err_msg) + Style.RESET_ALL 
+  return result
+
+# Print critical error message
+def print_critical_msg(err_msg):
+  result = Back.RED + CRITICAL_SIGN + str(err_msg) + Style.RESET_ALL
+  return result
+
+# Print abortion message
+def print_abort_msg(abort_msg):
+  result = Back.RED + ABORTION_SIGN + str(abort_msg) + Style.RESET_ALL
+  return result
+
+# Print warning message
+def print_warning_msg(warn_msg):
+  result = Fore.YELLOW + WARNING_SIGN + str(warn_msg) + Style.RESET_ALL 
+  return result
+
+# Print information message
+def print_info_msg(info_msg):
+  result = INFO_SIGN + str(info_msg)
+  return result
+
+# Print success message
+def print_success_msg(success_msg):
+  result = Style.BRIGHT + SUCCESS_SIGN + str(success_msg) + Style.RESET_ALL
+  return result
+
+# Print payload (verbose mode)
+def print_payload(payload):
+  result = Fore.CYAN + PAYLOAD_SIGN + str(payload) + Style.RESET_ALL
+  return result
+
+# Print checking message (verbose mode)
+def print_checking_msg(payload):
+  result = Fore.BLUE + CHECK_SIGN + str(payload) + Style.RESET_ALL
+  return result
+
+# Print question message
+def print_question_msg(question_msg):
+  result = QUESTION_SIGN + question_msg
+  return result
 
 #eof

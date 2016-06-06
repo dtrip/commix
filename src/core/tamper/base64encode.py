@@ -14,24 +14,20 @@ the Free Software Foundation, either version 3 of the License, or
 For more see the file 'readme/COPYING' for copying permission.
 """
 
-import sys
-
+import base64
+import urllib
 from src.utils import settings
-from src.thirdparty.colorama import Fore, Back, Style, init
 
 """
-Show version number and exit.
+Base64 all characters in a given payload.
 """
-def show_version():
-  print settings.VERSION + settings.COMMIT_ID
-  sys.exit(0)
 
-"""
-Check python version number.
-"""
-def python_version():
-  if settings.PYTHON_VERSION >= "3" or settings.PYTHON_VERSION < "2.6":
-    err_msg = "Incompatible Python version (" 
-    err_msg += settings.PYTHON_VERSION + ") detected."
-    print settings.print_error_msg(err_msg)
-    sys.exit(0)
+if not settings.TAMPER_SCRIPTS['base64encode']:
+  settings.TAMPER_SCRIPTS['base64encode'] = True
+
+def encode(payload):
+  payload = urllib.unquote(payload)
+  payload = base64.b64encode(payload)
+  return payload
+
+#eof 

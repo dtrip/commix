@@ -28,6 +28,7 @@ from src.utils import session_handler
 from src.core.requests import tor
 from src.core.requests import proxy
 from src.core.requests import headers
+from src.core.requests import requests
 
 
 from src.core.injections.controller import checks
@@ -42,6 +43,7 @@ do the authentication process using the provided credentials (auth_data).
 The authentication process
 """
 def authentication_process():
+
   auth_url = menu.options.auth_url
   auth_data = menu.options.auth_data
   cj = cookielib.CookieJar()
@@ -55,57 +57,18 @@ def authentication_process():
 
   if len(cookies) != 0 :
     menu.options.cookie = cookies.rstrip()
-    if menu.options.verbose:
-      print Style.BRIGHT + "(!) The received cookie is " + Style.UNDERLINE + menu.options.cookie + Style.RESET_ALL + "." + Style.RESET_ALL
+    if settings.VERBOSITY_LEVEL >= 1:
+      success_msg = "The received cookie is " + Style.UNDERLINE 
+      success_msg += menu.options.cookie + Style.RESET_ALL + "."
+      print settings.print_success_msg(success_msg)
 
   urllib2.install_opener(opener)
   request = urllib2.Request(auth_url, auth_data)
-
   # Check if defined extra headers.
   headers.do_check(request)
-
-  # Check if defined any HTTP Proxy.
-  if menu.options.proxy:
-    try:
-      response = proxy.use_proxy(request)
-    except urllib2.HTTPError, err:
-      if settings.IGNORE_ERR_MSG == False:
-        print "\n" + Back.RED + settings.ERROR_SIGN + str(err) + Style.RESET_ALL
-        continue_tests = checks.continue_tests(err)
-        if continue_tests == True:
-          settings.IGNORE_ERR_MSG = True
-        else:
-          raise SystemExit()
-      response = False 
-
-  # Check if defined Tor.
-  elif menu.options.tor:
-    try:
-      response = tor.use_tor(request)
-    except urllib2.HTTPError, err:
-      if settings.IGNORE_ERR_MSG == False:
-        print "\n" + Back.RED + settings.ERROR_SIGN + str(err) + Style.RESET_ALL
-        continue_tests = checks.continue_tests(err)
-        if continue_tests == True:
-          settings.IGNORE_ERR_MSG = True
-        else:
-          raise SystemExit()
-      response = False 
-
-  else:
-    try:
-      response = urllib2.urlopen(request)
-    except urllib2.HTTPError, err:
-      if settings.IGNORE_ERR_MSG == False:
-        print "\n" + Back.RED + settings.ERROR_SIGN + str(err) + Style.RESET_ALL
-        continue_tests = checks.continue_tests(err)
-        if continue_tests == True:
-          settings.IGNORE_ERR_MSG = True
-        else:
-          raise SystemExit()
-      response = False 
-
-  return response 
+  # Get the response of the request.
+  response = requests.get_request_response(request)
+  return response
 
 """
 Define the HTTP authentication 
@@ -115,33 +78,39 @@ def define_wordlists():
   try:
     usernames = []
     if not os.path.isfile(settings.USERNAMES_TXT_FILE):
-      print Back.RED + settings.ERROR_SIGN + "The username file (" + settings.USERNAMES_TXT_FILE + ") is not found" + Style.RESET_ALL
+      err_msg = "The username file (" + settings.USERNAMES_TXT_FILE + ") is not found"
+      print settings.print_error_msg(err_msg)
       sys.exit(0) 
     if len(settings.USERNAMES_TXT_FILE) == 0:
-      print Back.RED + settings.ERROR_SIGN + "The " + settings.USERNAMES_TXT_FILE + " file is empty."
+      err_msg = "The " + settings.USERNAMES_TXT_FILE + " file is empty."
+      print settings.print_error_msg(err_msg)
       sys.exit(0)
     with open(settings.USERNAMES_TXT_FILE, "r") as f: 
       for line in f:
         line = line.strip()
         usernames.append(line)
   except IOError: 
-    print Back.RED + settings.ERROR_SIGN + " Check if the " + settings.USERNAMES_TXT_FILE + " file is readable or corrupted."
+    err_msg = " Check if the " + settings.USERNAMES_TXT_FILE + " file is readable or corrupted."
+    print settings.print_error_msg(err_msg)
     sys.exit(0)
 
   try:
     passwords = []
     if not os.path.isfile(settings.PASSWORDS_TXT_FILE):
-      print Back.RED + settings.ERROR_SIGN + "The password file (" + settings.PASSWORDS_TXT_FILE + ") is not found" + Style.RESET_ALL
+      err_msg = "The password file (" + settings.PASSWORDS_TXT_FILE + ") is not found" + Style.RESET_ALL
+      print settings.print_error_msg(err_msg)
       sys.exit(0) 
     if len(settings.PASSWORDS_TXT_FILE) == 0:
-      print Back.RED + settings.ERROR_SIGN + "The " + settings.PASSWORDS_TXT_FILE + " file is empty."
-      exit()
+      err_msg = "The " + settings.PASSWORDS_TXT_FILE + " file is empty."
+      print settings.print_error_msg(err_msg)
+      sys.exit(0) 
     with open(settings.PASSWORDS_TXT_FILE, "r") as f: 
       for line in f:
         line = line.strip()
         passwords.append(line)
   except IOError: 
-    print Back.RED + settings.ERROR_SIGN + " Check if the " + settings.PASSWORDS_TXT_FILE + " file is readable or corrupted."
+    err_msg = " Check if the " + settings.PASSWORDS_TXT_FILE + " file is readable or corrupted."
+    print settings.print_error_msg(err_msg)
     sys.exit(0)
 
   return usernames, passwords
@@ -161,8 +130,10 @@ def http_auth_cracker(url, realm):
       for password in passwords:
         float_percent = "{0:.1f}%".format(round(((i*100)/(total*1.0)),2))
         # Check if verbose mode on
-        if menu.options.verbose:
-            sys.stdout.write(Fore.GREY + "(~) Checking: " + username + ":" + password + Style.RESET_ALL + "\n")
+        if settings.VERBOSITY_LEVEL >= 1:
+          payload = "pair of credentials: " + username + ":" + password
+          sys.stdout.write("\r" + settings.print_checking_msg(payload) + "           ")
+          sys.stdout.flush()
         try:
           # Basic authentication 
           if authentication_type.lower() == "basic":
@@ -186,28 +157,31 @@ def http_auth_cracker(url, realm):
         except:
           pass  
         if found:
-          if not menu.options.verbose:
+          if not settings.VERBOSITY_LEVEL >= 1:
             float_percent = Fore.GREEN + "SUCCEED" + Style.RESET_ALL
         else:
           if str(float_percent) == "100.0%":
-            if not menu.options.verbose:
+            if not settings.VERBOSITY_LEVEL >= 1:
               float_percent = Fore.RED + "FAILED" + Style.RESET_ALL
           else:  
             i = i + 1
-        if not menu.options.verbose:
-          sys.stdout.write("\r\r" + settings.INFO_SIGN + "Checking for a valid pair of credentials... [ " +  float_percent + " ]")
+        if not settings.VERBOSITY_LEVEL >= 1:
+          info_msg = "Checking for a valid pair of credentials... [ " +  float_percent + " ]"
+          sys.stdout.write("\r\r" + settings.print_info_msg(info_msg))
           sys.stdout.flush()
         if found:
           valid_pair =  "" + username + ":" + password + ""
-          if not menu.options.verbose:
-            print ""
-          print Style.BRIGHT + "(!) Identified a valid pair of credentials '" + Style.UNDERLINE  + valid_pair + Style.RESET_ALL + Style.BRIGHT  + "'." + Style.RESET_ALL
+          print ""
+          success_msg = "Identified a valid pair of credentials '" 
+          success_msg += Style.UNDERLINE  + valid_pair + Style.RESET_ALL + Style.BRIGHT  + "'."  
+          print settings.print_success_msg(success_msg)
           return valid_pair
 
-    error_msg = "Use the '--auth-cred' option to provide a valid pair of " 
-    error_msg += "HTTP authentication credentials (i.e --auth-cred=\"admin:admin\") " 
-    error_msg += "or place an other dictionary into '" + os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'txt')) + "/' directory."
-    print "\n" + Back.RED + settings.ERROR_SIGN + error_msg + Style.RESET_ALL  
+    err_msg = "Use the '--auth-cred' option to provide a valid pair of " 
+    err_msg += "HTTP authentication credentials (i.e --auth-cred=\"admin:admin\") " 
+    err_msg += "or place an other dictionary into '" 
+    err_msg += os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'txt')) + "/' directory."
+    print "\n" + settings.print_error_msg(err_msg)  
     return False  
 
 #eof

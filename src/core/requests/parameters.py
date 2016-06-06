@@ -21,6 +21,7 @@ import json
 
 from src.utils import menu
 from src.utils import settings
+from src.core.injections.controller import checks
 from src.thirdparty.colorama import Fore, Back, Style, init
 
 """
@@ -41,15 +42,25 @@ Check if the 'INJECT_HERE' tag, is specified on GET Requests.
 """
 def do_GET_check(url):
 
+  # Do replacement with the 'INJECT_HERE' tag, if the wildcard char is provided.
+  url = checks.wildcard_character(url)
+
   # Check for REST-ful URLs format. 
   if "?" not in url:
     if settings.INJECT_TAG not in url and not menu.options.shellshock:
-      print Back.RED + settings.ERROR_SIGN + "You must set the \"INJECT_HERE\" tag to specify the testable parameter." + Style.RESET_ALL + "\n"
-      os._exit(0)   
+      if menu.options.level == 3 or menu.options.headers:
+        return False
+      if menu.options.level == 2 :
+        return False
+      else:  
+        err_msg = "No parameter(s) found for testing in the provided data. "
+        err_msg += "You must specify the testable parameter or "
+        err_msg += "try to increase '--level' values to perform more tests. " 
+        print settings.print_error_msg(err_msg) + "\n"
+        os._exit(0)   
     return url
 
   urls_list = []
-
   # Find the host part
   url_part = get_url_part(url)
   # Find the parameter part
@@ -65,7 +76,20 @@ def do_GET_check(url):
       value = ''.join(value)
       # Replace the value of parameter with INJECT tag
       inject_value = value.replace(value, settings.INJECT_TAG)
-      parameters = parameters.replace(value, inject_value)
+      parameters = parameters.replace(value, inject_value) 
+    else:
+      # Grab the value of parameter.
+      value = re.findall(r'=(.*)', parameters)
+      value = ''.join(value)
+      # Auto-recognize prefix / suffix
+      if settings.INJECT_TAG in value:
+        if len(value.rsplit(settings.INJECT_TAG, 0)[0]) > 0:
+          menu.options.prefix = value.rsplit(settings.INJECT_TAG, 1)[0]
+        if len(value.rsplit(settings.INJECT_TAG, 1)[1]) > 0:
+          menu.options.suffix = value.rsplit(settings.INJECT_TAG, 1)[1]
+      # Replace the value of parameter with INJECT tag
+      inject_value = value.replace(value, settings.INJECT_TAG)
+      parameters = parameters.replace(value, inject_value) 
     # Reconstruct the url
     url = url_part + "?" + parameters
     urls_list.append(url)
@@ -86,14 +110,21 @@ def do_GET_check(url):
         # Grab the value of parameter.
         value = re.findall(r'=(.*)', all_params[param])
         value = ''.join(value)
-        # Replace the value of parameter with INJECT tag
-        inject_value = value.replace(value, settings.INJECT_TAG)
-        all_params[param] = all_params[param].replace(value, inject_value)
-        all_params[param-1] = all_params[param-1].replace(inject_value, old)
-        parameter = settings.PARAMETER_DELIMITER.join(all_params)
-        # Reconstruct the url
-        url = url_part + "?" + parameter  
-        urls_list.append(url)
+        if not value == "":
+          # Replace the value of parameter with INJECT tag
+          inject_value = value.replace(value, settings.INJECT_TAG)
+          all_params[param] = all_params[param].replace(value, inject_value)
+          all_params[param-1] = all_params[param-1].replace(inject_value, old)
+          parameter = settings.PARAMETER_DELIMITER.join(all_params)
+          # Reconstruct the url
+          url = url_part + "?" + parameter  
+          urls_list.append(url)
+        else:
+          provided_value = re.findall(r'(.*)=', all_params[param])
+          provided_value = ''.join(provided_value)
+          warn_msg = "The '" + provided_value 
+          warn_msg += "' parameter has been skipped from testing because the provided value is empty."
+          print settings.print_warning_msg(warn_msg)
     else:
       for param in range(0,len(multi_parameters)):
         # Grab the value of parameter.
@@ -147,24 +178,34 @@ Check if the 'INJECT_HERE' tag, is specified on POST Requests.
 """
 def do_POST_check(parameter):
 
+    # Do replacement with the 'INJECT_HERE' tag, if the wildcard char is provided.
+  parameter = checks.wildcard_character(parameter)
+
   # Check if valid JSON
   def is_JSON_check(parameter):
     try:
       json_object = json.loads(parameter)
-    except ValueError, err:
-      if not "No JSON object could be decoded" in err:
-        print Back.RED + settings.ERROR_SIGN + "JSON " + str(err) + ". " + Style.RESET_ALL + "\n"
+      if re.search(settings.JSON_RECOGNITION_REGEX, parameter):
+        if settings.VERBOSITY_LEVEL >= 1 and not settings.IS_JSON:
+          success_msg = Style.BRIGHT + Style.UNDERLINE + "JSON data" 
+          success_msg += Style.RESET_ALL + Style.BRIGHT
+          success_msg += " found in POST data" 
+          success_msg += Style.RESET_ALL + "."
+          print settings.print_success_msg(success_msg)
+    
+    except ValueError, err_msg:
+      if not "No JSON object could be decoded" in err_msg:
+        err_msg = "JSON " + str(err_msg) + ". "
+        print settings.print_error_msg(err_msg) + "\n"
         sys.exit(0)
       return False
     else:  
       return True
 
-  if all(symbol in parameter for symbol in settings.JSON_SYMBOLS):
-    parameter = parameter.replace("'", "\"")
-
   # Check if JSON Object.
   if is_JSON_check(parameter):
     settings.IS_JSON = True
+    
   # Split parameters
   if settings.IS_JSON:
     settings.PARAMETER_DELIMITER = ","
@@ -193,7 +234,6 @@ def do_POST_check(parameter):
 
   # Check if multiple paramerters are supplied.
   else:
-    #paramerters_list = []
     all_params = settings.PARAMETER_DELIMITER.join(multi_parameters)
     all_params = all_params.split(settings.PARAMETER_DELIMITER)
     # Check if not defined the "INJECT_HERE" tag in parameter
@@ -216,13 +256,26 @@ def do_POST_check(parameter):
         else:  
           value = re.findall(r'=(.*)', all_params[param])
           value = ''.join(value)
-        # Replace the value of parameter with INJECT tag
-        inject_value = value.replace(value, settings.INJECT_TAG)
-        all_params[param] = all_params[param].replace(value, inject_value)
-        all_params[param-1] = all_params[param-1].replace(inject_value, old)
-        parameter = settings.PARAMETER_DELIMITER.join(all_params)
-        paramerters_list.append(parameter)
-        parameter = paramerters_list
+        if not value == "":
+          # Replace the value of parameter with INJECT tag
+          inject_value = value.replace(value, settings.INJECT_TAG)
+          all_params[param] = all_params[param].replace(value, inject_value)
+          all_params[param-1] = all_params[param-1].replace(inject_value, old)
+          parameter = settings.PARAMETER_DELIMITER.join(all_params)
+          paramerters_list.append(parameter)
+          parameter = paramerters_list
+        else:
+          if settings.IS_JSON:
+            #Grab the value of parameter.
+            provided_value = re.findall(r'\"(.*)\"\:', all_params[param])
+            provided_value = ''.join(provided_value)
+          else:  
+            provided_value = re.findall(r'(.*)=', all_params[param])
+            provided_value = ''.join(provided_value)
+          warn_msg = "The '" + provided_value 
+          warn_msg += "' parameter has been skipped from testing because the provided value is empty."
+          print settings.print_warning_msg(warn_msg) 
+
     else:
       for param in range(0, len(multi_parameters)):
         # Grab the value of parameter.
@@ -232,7 +285,7 @@ def do_POST_check(parameter):
         else:  
           value = re.findall(r'=(.*)', multi_parameters[param])
           value = ''.join(value)
-        parameter = settings.PARAMETER_DELIMITER.join(multi_parameters) 
+        parameter = settings.PARAMETER_DELIMITER.join(multi_parameters)
     return parameter
 
 """
@@ -294,6 +347,7 @@ def suffixes(payload, suffix):
 The cookie based injection.
 """
 def do_cookie_check(cookie):
+
   multi_parameters = cookie.split(settings.COOKIE_DELIMITER)
   # Check if single paramerter is supplied.
   if len(multi_parameters) == 1:
@@ -323,13 +377,21 @@ def do_cookie_check(cookie):
         # Grab the value of cookie.
         value = re.findall(r'=(.*)', all_params[param])
         value = ''.join(value)
-        # Replace the value of cookie with INJECT tag
-        inject_value = value.replace(value, settings.INJECT_TAG)
-        all_params[param] = all_params[param].replace(value, inject_value)
-        all_params[param-1] = all_params[param-1].replace(inject_value, old)
-        cookie = settings.COOKIE_DELIMITER.join(all_params)
-        cookies_list.append(cookie)
-        cookie = cookies_list
+        if not value == "":        
+          # Replace the value of cookie with INJECT tag
+          inject_value = value.replace(value, settings.INJECT_TAG)
+          all_params[param] = all_params[param].replace(value, inject_value)
+          all_params[param-1] = all_params[param-1].replace(inject_value, old)
+          cookie = settings.COOKIE_DELIMITER.join(all_params)
+          cookies_list.append(cookie)
+          cookie = cookies_list
+        else:
+          provided_value = re.findall(r'(.*)=', all_params[param])
+          provided_value = ''.join(provided_value)
+          warn_msg = "The '" + provided_value 
+          warn_msg += "' parameter has been skipped from testing because the provided value is empty."
+          print settings.print_warning_msg(warn_msg) 
+
 
     else:
       for param in range(0, len(multi_parameters)):
@@ -344,6 +406,9 @@ Specify the cookie parameter(s).
 """
 def specify_cookie_parameter(cookie):
 
+  # Do replacement with the 'INJECT_HERE' tag, if the wildcard char is provided.
+  cookie = checks.wildcard_character(cookie)
+  
   # Specify the vulnerable cookie parameter
   if re.findall(r"" + settings.COOKIE_DELIMITER + "(.*)=" + settings.INJECT_TAG + "", cookie):
     inject_cookie = re.findall(r"" + settings.COOKIE_DELIMITER + "(.*)=" + settings.INJECT_TAG + "", cookie)

