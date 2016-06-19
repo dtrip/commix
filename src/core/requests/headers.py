@@ -31,23 +31,19 @@ def do_check(request):
   
   # Check if defined any HTTP Host header.
   if menu.options.host:
-    Host = menu.options.host
-    request.add_header('Host', Host)
-    
+    request.add_header('Host', menu.options.host)
+
+  # Check if defined any HTTP User-Agent header.
+  if menu.options.agent:
+    request.add_header('User-Agent', menu.options.agent)
+
   # Check if defined any HTTP Referer header.
   if menu.options.referer and settings.REFERER_INJECTION == False:
-    Referer = menu.options.referer
-    request.add_header('Referer', Referer)
-    
-  # Check if defined any HTTP User-Agent header.
-  if menu.options.agent and settings.USER_AGENT_INJECTION == False:
-    Agent = menu.options.agent
-    request.add_header('User-Agent', Agent)
-    
+    request.add_header('Referer', menu.options.referer)
+        
   # Check if defined any HTTP Cookie header.
   if menu.options.cookie and settings.COOKIE_INJECTION == False:
-    Cookie = menu.options.cookie
-    request.add_header('Cookie', Cookie)
+    request.add_header('Cookie', menu.options.cookie)
 
   # Check if defined any HTTP Authentication credentials.
   # HTTP Authentication: Basic / Digest Access Authentication.
@@ -83,14 +79,14 @@ def do_check(request):
       except ValueError:
         err_msg = "Unsupported / Invalid HTTP authentication type '" + menu.options.auth_type + "'."
         err_msg += " Try basic or digest HTTP authentication type."
-        print settings.print_error_msg(err_msg)
+        print settings.print_critical_msg(err_msg)
         sys.exit(0)   
     else:
       pass        
     
   # The MIME media type for JSON.
   if settings.IS_JSON:
-  	request.add_header("Content-Type", "application/json")
+    request.add_header("Content-Type", "application/json")
 
   # Check if defined any extra HTTP headers.
   if menu.options.headers:
@@ -115,6 +111,5 @@ def do_check(request):
         settings.CUSTOM_HEADER_INJECTION = True
         settings.CUSTOM_HEADER_NAME = http_header_name
       request.add_header(http_header_name, http_header_value)
-
 
 #eof

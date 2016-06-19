@@ -31,7 +31,8 @@ Procced to the next attack vector.
 def next_attack_vector(technique, go_back):
   while True:
     question_msg = "Continue with testing the " + technique + "? [Y/n/q] > "
-    next_attack_vector = raw_input(settings.print_question_msg(question_msg)).lower()
+    sys.stdout.write(settings.print_question_msg(question_msg))
+    next_attack_vector = sys.stdin.readline().replace("\n","").lower()
     if next_attack_vector in settings.CHOICE_YES:
       return True
     elif next_attack_vector in settings.CHOICE_NO:
@@ -42,7 +43,7 @@ def next_attack_vector(technique, go_back):
       if next_attack_vector == "":
         next_attack_vector = "enter"
       err_msg = "'" + next_attack_vector + "' is not a valid answer."  
-      print settings.print_error_msg(err_msg) + "\n"
+      print settings.print_error_msg(err_msg)
       pass
 
 """
@@ -106,7 +107,8 @@ def continue_tests(err):
     while True:
       question_msg = "Do you want to ignore the error (" + str(err.code) 
       question_msg += ") message and continue the tests? [Y/n/q] > "
-      continue_tests = raw_input(settings.print_question_msg(question_msg)).lower()
+      sys.stdout.write(settings.print_question_msg(question_msg))
+      continue_tests = sys.stdin.readline().replace("\n","").lower()
       if continue_tests in settings.CHOICE_YES:
         return True
       elif continue_tests in settings.CHOICE_NO:
@@ -117,7 +119,7 @@ def continue_tests(err):
         if continue_tests == "":
           continue_tests = "enter"
         err_msg = "'" + continue_tests + "' is not a valid answer."  
-        print settings.print_error_msg(err_msg) + "\n"
+        print settings.print_error_msg(err_msg)
         pass
   except KeyboardInterrupt:
     print "\n" + Back.RED + settings.ABORTION_SIGN + "Ctrl-C was pressed!" + Style.RESET_ALL
@@ -168,7 +170,8 @@ def ps_check():
     while True:
       question_msg = "Do you want to use the \"--ps-version\" option "
       question_msg += "so ensure that PowerShell is enabled? [Y/n/q] > "
-      ps_check = raw_input(settings.print_question_msg(question_msg)).lower()
+      sys.stdout.write(settings.print_question_msg(question_msg))
+      ps_check = sys.stdin.readline().replace("\n","").lower()
       if ps_check in settings.CHOICE_YES:
         menu.options.ps_version = True
         break
@@ -181,7 +184,7 @@ def ps_check():
         if ps_check == "":
           ps_check = "enter"
         err_msg = "'" + ps_check + "' is not a valid answer."  
-        print settings.print_error_msg(err_msg) + "\n"
+        print settings.print_error_msg(err_msg)
         pass
 
 """
@@ -190,8 +193,9 @@ If PowerShell is disabled.
 def ps_check_failed():
   while True:
     question_msg = "Do you want to ignore the above warning "
-    question_msg += "and continue the procedure? [Y/n] > "
-    ps_check = raw_input(settings.print_question_msg(question_msg)).lower()
+    question_msg += "and continue the procedure? [Y/n/q] > "
+    sys.stdout.write(settings.print_question_msg(question_msg))
+    ps_check = sys.stdin.readline().replace("\n","").lower()
     if ps_check in settings.CHOICE_YES:
       break
     elif ps_check in settings.CHOICE_NO:
@@ -201,8 +205,58 @@ def ps_check_failed():
       if ps_check == "":
         ps_check = "enter"
       err_msg = "'" + ps_check + "' is not a valid answer."  
-      print settings.print_error_msg(err_msg) + "\n"
+      print settings.print_error_msg(err_msg)
       pass
+
+
+"""
+Check if CGI scripts (shellshock injection).
+"""
+def check_CGI_scripts(url):
+
+  try:
+    CGI_SCRIPTS = []
+    if not os.path.isfile(settings.CGI_SCRIPTS ):
+      err_msg = "The pages / scripts list (" + settings.CGI_SCRIPTS  + ") is not found"
+      print settings.print_critical_msg(err_msg)
+      sys.exit(0) 
+    if len(settings.CGI_SCRIPTS ) == 0:
+      err_msg = "The " + settings.CGI_SCRIPTS  + " list is empty."
+      print settings.print_critical_msg(err_msg)
+      sys.exit(0)
+    with open(settings.CGI_SCRIPTS , "r") as f: 
+      for line in f:
+        line = line.strip()
+        CGI_SCRIPTS.append(line)
+  except IOError: 
+    err_msg = " Check if the " + settings.CGI_SCRIPTS  + " list is readable or corrupted."
+    print settings.print_critical_msg(err_msg)
+    sys.exit(0)
+
+  for cgi_script in CGI_SCRIPTS:
+    if cgi_script in url and menu.options.shellshock == False:
+      warn_msg = "URL is probable to contain a script ('" + cgi_script + "') "
+      warn_msg += "vulnerable to shellshock. "
+      print settings.print_warning_msg(warn_msg)
+      while True:
+        question_msg = "Do you want to enable the shellshock injection module? [Y/n/q] > "
+        sys.stdout.write(settings.print_question_msg(question_msg))
+        shellshock_check = sys.stdin.readline().replace("\n","").lower()
+        if shellshock_check in settings.CHOICE_YES:
+          menu.options.shellshock = True
+          break
+        elif shellshock_check in settings.CHOICE_NO:
+          menu.options.shellshock = False
+          break
+        elif shellshock_check in settings.CHOICE_QUIT:
+          print ""
+          os._exit(0)
+        else:  
+          if shellshock_check == "":
+            shellshock_check = "enter"
+          err_msg = "'" + shellshock_check + "' is not a valid answer."  
+          print settings.print_error_msg(err_msg)
+          pass
 
 """
 Check if http / https.
@@ -211,13 +265,15 @@ def check_http_s(url):
   if urlparse.urlparse(url).scheme:
     if menu.options.force_ssl and urlparse.urlparse(url).scheme != "https":
       url = re.sub("\Ahttp:", "https:", url, re.I)
+      settings.PROXY_PROTOCOL = 'https'
   else:
     if menu.options.force_ssl:
       url = "https://" + url
+      settings.PROXY_PROTOCOL = 'https'
     else:
       url = "http://" + url
   return url
-
+  
 """
 Force the user-defined operating system name.
 """
@@ -245,7 +301,8 @@ def identified_os():
     warn_msg += settings.TARGET_OS + ") than that you have provided." 
     print settings.print_warning_msg(warn_msg)
     question_msg = "How do you want to proceed? [(C)ontinue/(s)kip/(q)uit] > "
-    proceed_option = raw_input(settings.print_question_msg(question_msg)).lower()
+    sys.stdout.write(settings.print_question_msg(question_msg))
+    proceed_option = sys.stdin.readline().replace("\n","").lower()
     if proceed_option.lower() in settings.CHOICE_PROCEED :
       if proceed_option.lower() == "s":
         return False
@@ -257,7 +314,7 @@ def identified_os():
       if proceed_option == "":
         proceed_option = "enter"
       err_msg = "'" + proceed_option + "' is not a valid answer."  
-      print settings.print_error_msg(err_msg) + "\n"
+      print settings.print_error_msg(err_msg)
       pass
 
 """
@@ -274,7 +331,7 @@ def third_party_dependencies():
     print "[" + Fore.RED + " FAILED " + Style.RESET_ALL + "]"
     err_msg = settings.APPLICATION + " requires 'sqlite3' third-party library "
     err_msg += "in order to store previous injection points and commands. "
-    print settings.print_error_msg(err_msg)
+    print settings.print_critical_msg(err_msg)
     sys.exit(0)
 
   try:
@@ -288,7 +345,7 @@ def third_party_dependencies():
         err_msg = settings.APPLICATION + " requires 'pyreadline' third-party library "
         err_msg += "in order to be able to take advantage of the TAB "
         err_msg += "completion and history support features. "
-        print settings.print_error_msg(err_msg) 
+        print settings.print_critical_msg(err_msg) 
         sys.exit(0)
     else:
       try:
@@ -298,7 +355,7 @@ def third_party_dependencies():
         err_msg = settings.APPLICATION + " requires 'gnureadline' third-party library "
         err_msg += "in order to be able to take advantage of the TAB "
         err_msg += "completion and history support features. "
-        print settings.print_error_msg(err_msg)
+        print settings.print_critical_msg(err_msg)
     pass
 
   print "[" + Fore.GREEN + " SUCCEED " + Style.RESET_ALL + "]"
@@ -313,7 +370,7 @@ def http_auth_err_msg():
   err_msg += "HTTP authentication credentials (i.e --auth-cred=\"admin:admin\")" 
   err_msg += " or use the '--ignore-401' option to ignore HTTP error 401 (Unauthorized)" 
   err_msg += " and continue tests without providing valid credentials."
-  print settings.print_error_msg(err_msg) 
+  print settings.print_critical_msg(err_msg) 
   sys.exit(0)
 
 """
@@ -326,7 +383,8 @@ def identified_http_auth_type(auth_type):
   warn_msg += menu.options.auth_type + ")." 
   print settings.print_warning_msg(warn_msg)
   question_msg = "How do you want to proceed? [(C)ontinue/(s)kip/(q)uit] > "
-  proceed_option = raw_input(settings.print_question_msg(question_msg)).lower()
+  sys.stdout.write(settings.print_question_msg(question_msg))
+  proceed_option = sys.stdin.readline().replace("\n","").lower()
   if proceed_option.lower() in settings.CHOICE_PROCEED :
     if proceed_option.lower() == "s":
       return False
@@ -338,7 +396,7 @@ def identified_http_auth_type(auth_type):
     if proceed_option == "":
       proceed_option = "enter"
     err_msg = "'" + proceed_option + "' is not a valid answer." 
-    print settings.print_error_msg(err_msg) + "\n"
+    print settings.print_error_msg(err_msg)
     pass
 
 """
@@ -375,7 +433,7 @@ def wildcard_character(data):
     if data.count(settings.WILDCARD_CHAR) > 1:
       err_msg = "You specified more than one testable parameters. " 
       err_msg += "Use the '-p' option to define them (i.e -p \"id1,id2\"). "
-      print settings.print_error_msg(err_msg) 
+      print settings.print_critical_msg(err_msg) 
       sys.exit(0)
     else:  
       data = data.replace(settings.WILDCARD_CHAR, settings.INJECT_TAG)
@@ -416,18 +474,29 @@ def check_whitespaces():
 Tamper script checker
 """
 def tamper_scripts():
+
+  info_msg = "Loading tamper script(s): "
+  print settings.print_info_msg(info_msg)
+
+  # Check the provided tamper script(s)
+  tamper_script_counter = 0
   for tfile in re.split(settings.PARAMETER_SPLITTING_REGEX, menu.options.tamper.lower()):
     check_tfile = "src/core/tamper/" + tfile + ".py"
-    info_msg = "Loading the tamper script '" + tfile + "'. "
-    print settings.print_info_msg(info_msg)
+
     if not os.path.exists(check_tfile.lower()):
       if not settings.LOAD_SESSION:
         err_msg = "The '" + tfile + "' tamper script does not exist."
         print settings.print_error_msg(err_msg)
+
     if os.path.isfile(check_tfile):
+      tamper_script_counter =  tamper_script_counter + 1
       import importlib
       check_tfile = check_tfile.replace("/",".")
       importlib.import_module(check_tfile.split(".py")[0])
+      print settings.SUB_CONTENT_SIGN + tfile 
+
+  # info_msg = str(tamper_script_counter) + " tamper script" + "s"[tamper_script_counter == 1:] +  " enabled."
+  # print settings.print_info_msg(info_msg)     
 
 """
 Check if the payload output seems to be base64.
@@ -461,8 +530,7 @@ def whitespace_check(payload):
       tamper_scripts()
   else:
     count_plus = payload.count("+")
-    if count_plus > 2 and not "%20" in payload:
-      settings.WHITESPACE[0] = "+"
+    if count_plus >= 2 and not "%20" in payload:
       if not settings.TAMPER_SCRIPTS['space2plus']:
         if menu.options.tamper:
           menu.options.tamper = menu.options.tamper + ",space2plus"

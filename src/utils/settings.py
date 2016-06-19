@@ -18,7 +18,6 @@ import os
 import sys
 import time
 import urllib
-
 from src.thirdparty.colorama import Fore, Back, Style, init
 
 """
@@ -30,7 +29,13 @@ APPLICATION = "commix"
 DESCRIPTION_FULL = "Automated All-in-One OS Command Injection and Exploitation Tool"
 DESCRIPTION = "The command injection exploiter"
 AUTHOR  = "Anastasios Stasinopoulos"
-VERSION = "v0.9b"
+MAJOR = "1"
+MINOR = "1"
+COMMIT_ID = "1"
+VERSION = MAJOR + "." + MINOR
+STABLE_VERSION = False
+if not STABLE_VERSION:
+  VERSION = MAJOR + "." + MINOR + "." + COMMIT_ID
 YEAR    = "2014-2016"
 AUTHOR_TWITTER = "@ancst" 
 APPLICATION_TWITTER = "@commixproject" 
@@ -56,15 +61,7 @@ EVAL_BASED_STATE = False
 TIME_BASED_STATE = False
 FILE_BASED_STATE = False
 TEMPFILE_BASED_STATE = False
-TIME_BASED_ATTACK = False
-# Check Commit ID
-if os.path.isdir("./.git"):
-  with open('.git/refs/heads/master', 'r') as f:
-    COMMIT_ID = "-" + "git" + "-" + f.readline()[0:7]
-else:
-  os.chdir("src/")
-  COMMIT_ID = "-" + "nongit" + "-" + time.strftime("%Y%m%d", time.gmtime(os.path.getmtime(min(os.listdir(os.getcwd()), key=os.path.getctime))))
-
+TIME_RELATIVE_ATTACK = False
 # Check if OS is Windows.
 IS_WINDOWS = hasattr(sys, 'getwindowsversion')
 
@@ -232,10 +229,10 @@ PRIVOXY_PORT = "8118"
 COOKIE_INJECTION = False
 
 # User-Agent injection
-USER_AGENT_INJECTION = False
+USER_AGENT_INJECTION = None
 
 # Referer injection
-REFERER_INJECTION = False
+REFERER_INJECTION = None
 
 # Custom HTTP Headers injection
 CUSTOM_HEADER_INJECTION = False
@@ -357,8 +354,8 @@ WIN_PYTHON_DIR = "C:\\Python27\\"
 WIN_PHP_DIR = "C:\\xampp\\php\\"
 
 # Comment out
-WIN_COMMENT = " REM "
-COMMENT = " # "
+WIN_COMMENT = "REM"
+COMMENT = "#"
 
 #Delete command
 WIN_DEL = "DEL "
@@ -375,15 +372,17 @@ FAILED_TRIES = 20
 PS_ENABLED = None
 
 # Status Signs
-SUCCESS_SIGN = "(!) "
-INFO_SIGN = "(*) "
-QUESTION_SIGN = "(?) "
-WARNING_SIGN = "(^) Warning: "
-ERROR_SIGN = "(x) Error: "
-CRITICAL_SIGN = "(x) Critical: "
-ABORTION_SIGN = "(x) Aborted: "
-PAYLOAD_SIGN = "(~) Payload: "
-CHECK_SIGN = "(>) Checking "
+SUCCESS_SIGN =  "[" + Fore.GREEN + Style.BRIGHT + "+" + Style.RESET_ALL + "] "
+INFO_SIGN =  Style.RESET_ALL + "[" + Fore.BLUE + Style.BRIGHT + "*" + Style.RESET_ALL + "] "
+QUESTION_SIGN =  Style.RESET_ALL + "[" + Style.BRIGHT + Fore.MAGENTA + "?" + Style.RESET_ALL + "] "
+WARNING_SIGN =  "[" + Fore.YELLOW  + "!" + Style.RESET_ALL + "] " + Fore.YELLOW + "Warning: "
+WARNING_BOLD_SIGN =  "[" + Style.BRIGHT + Fore.YELLOW  + "!" + Style.RESET_ALL + "] " + Style.BRIGHT + Fore.YELLOW + "Warning: "
+ERROR_SIGN =  "[" + Fore.RED + Style.BRIGHT + "x" + Style.RESET_ALL  + "] " + Fore.RED 
+ABORTION_SIGN =  "[" + Fore.RED + Style.BRIGHT + "x" + Style.RESET_ALL  + "] " + Fore.RED 
+CRITICAL_SIGN =  Back.RED + "[x] Critical: "
+PAYLOAD_SIGN =  "    |_ " + Fore.CYAN
+CHECK_SIGN =  "[" + Fore.BLUE + Style.BRIGHT + "*" + Style.RESET_ALL  + "] " + "Checking "
+SUB_CONTENT_SIGN =  "    [" + Fore.GREY + Style.BRIGHT + "~" + Style.RESET_ALL  + "] "
 
 # Default LHOST / LPORT setup, 
 # for the reverse TCP connection
@@ -409,6 +408,9 @@ REQUIRED_AUTHENTICATION = False
 INJECTED_HTTP_HEADER = False
 INJECTION_CHECKER = False
 
+# List of pages / scripts potentially vulnerable to Shellshock
+CGI_SCRIPTS = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'txt')) + "/" + "shocker-cgi_list.txt"
+
 # Supported HTTP Authentication types
 SUPPORTED_HTTP_AUTH_TYPES = [ "basic", "digest" ]
 
@@ -424,47 +426,52 @@ TAMPER_SCRIPTS = {
 
 # Print error message
 def print_error_msg(err_msg):
-  result = Back.RED + ERROR_SIGN + str(err_msg) + Style.RESET_ALL 
+  result = ERROR_SIGN + str(err_msg) + Style.RESET_ALL
   return result
 
 # Print critical error message
 def print_critical_msg(err_msg):
-  result = Back.RED + CRITICAL_SIGN + str(err_msg) + Style.RESET_ALL
+  result = CRITICAL_SIGN + str(err_msg) + Style.RESET_ALL
   return result
 
 # Print abortion message
 def print_abort_msg(abort_msg):
-  result = Back.RED + ABORTION_SIGN + str(abort_msg) + Style.RESET_ALL
+  result = ABORTION_SIGN + str(abort_msg) + Style.RESET_ALL
   return result
 
 # Print warning message
 def print_warning_msg(warn_msg):
-  result = Fore.YELLOW + WARNING_SIGN + str(warn_msg) + Style.RESET_ALL 
+  result = WARNING_SIGN + str(warn_msg)  + Style.RESET_ALL
+  return result
+
+# Print warning message
+def print_bold_warning_msg(warn_msg):
+  result = WARNING_BOLD_SIGN + str(warn_msg)  + Style.RESET_ALL
   return result
 
 # Print information message
 def print_info_msg(info_msg):
-  result = INFO_SIGN + str(info_msg)
+  result = INFO_SIGN + str(info_msg) + Style.RESET_ALL
   return result
 
 # Print success message
 def print_success_msg(success_msg):
-  result = Style.BRIGHT + SUCCESS_SIGN + str(success_msg) + Style.RESET_ALL
+  result = SUCCESS_SIGN + Style.BRIGHT + str(success_msg) + Style.RESET_ALL
   return result
 
 # Print payload (verbose mode)
 def print_payload(payload):
-  result = Fore.CYAN + PAYLOAD_SIGN + str(payload) + Style.RESET_ALL
+  result = PAYLOAD_SIGN + str(payload) + Style.RESET_ALL
   return result
 
 # Print checking message (verbose mode)
 def print_checking_msg(payload):
-  result = Fore.BLUE + CHECK_SIGN + str(payload) + Style.RESET_ALL
+  result = CHECK_SIGN + str(payload) + Style.RESET_ALL
   return result
 
 # Print question message
 def print_question_msg(question_msg):
-  result = QUESTION_SIGN + question_msg
+  result = QUESTION_SIGN + question_msg 
   return result
 
 #eof

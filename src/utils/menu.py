@@ -29,7 +29,7 @@ The commix's banner.
 def banner():
   print """                                       __           
    ___    ___     ___ ___     ___ ___ /\_\   __  _   
-  /'___\ / __`\ /' __` __`\ /' __` __`\/\ \ /\ \/'\  """ + Style.BRIGHT + Style.UNDERLINE + Fore.MAGENTA + settings.VERSION  + settings.COMMIT_ID + Style.RESET_ALL + """
+  /'___\ / __`\ /' __` __`\ /' __` __`\/\ \ /\ \/'\  """ + Style.BRIGHT + Style.UNDERLINE + settings.VERSION + Style.RESET_ALL + """
  /\ \__//\ \L\ \/\ \/\ \/\ \/\ \/\ \/\ \ \ \\\/>  </
  \ \____\ \____/\ \_\ \_\ \_\ \_\ \_\ \_\ \_\\/\_/\\_\\ 
   \/____/\/___/  \/_/\/_/\/_/\/_/\/_/\/_/\/_/\//\/_/ (""" + Fore.LIGHTRED_EX + settings.APPLICATION_TWITTER + Style.RESET_ALL + """) 
@@ -135,7 +135,7 @@ request.add_option("--referer",
 request.add_option("--user-agent",
                 action="store",
                 dest="agent",
-                default = settings.APPLICATION + "/" + settings.VERSION + settings.COMMIT_ID,
+                default = settings.APPLICATION + "/" + settings.VERSION,
                 help="HTTP User-Agent header.")
 
 request.add_option("--random-agent",
@@ -356,7 +356,7 @@ injection.add_option("--maxlen",
 injection.add_option("--delay", 
                 action="store",
                 dest="delay",
-                help="Set custom time delay for time-related injection techniques (Default: " + str(settings.DELAY) + " sec).")
+                help="Set custom time delay for time-related injection techniques (Default: 1 sec).")
 
 injection.add_option("--tmp-path", 
                 action="store",
