@@ -43,19 +43,33 @@ Command Injection and exploitation controller.
 Checks if the testable parameter is exploitable.
 """
 
+"""
+Check for previously stored sessions.
+"""
 def check_for_stored_sessions(url, http_request_method):
 
   if not menu.options.ignore_session:
     if os.path.isfile(settings.SESSION_FILE) and not settings.REQUIRED_AUTHENTICATION:
       if not menu.options.tech:
-        menu.options.tech = session_handler.applied_techniques(url, http_request_method)
+        settings.SESSION_APPLIED_TECHNIQUES = session_handler.applied_techniques(url, http_request_method)
+        menu.options.tech = settings.SESSION_APPLIED_TECHNIQUES
       if session_handler.check_stored_parameter(url, http_request_method):
         settings.LOAD_SESSION = True
-        return True
+        return True    
 
   if menu.options.flush_session:
-    session_handler.flush(url)        
+    session_handler.flush(url)  
 
+"""
+Check for previously stored injection level.
+"""
+def check_for_stored_levels(url, http_request_method):
+
+  if not menu.options.ignore_session:
+    if menu.options.level == settings.DEFAULT_INJECTION_LEVEL:
+      menu.options.level = session_handler.applied_levels(url, http_request_method)
+      if type(menu.options.level) is not int :
+        menu.options.level = settings.DEFAULT_INJECTION_LEVEL
 """
 Proceed to the injection process for the appropriate parameter.
 """
@@ -248,6 +262,10 @@ def get_request(url, http_request_method, filename, delay):
       url = found_url[i]
       check_parameter = parameters.vuln_GET_param(url)
       # Check if testable parameter(s) are provided
+
+      if len(check_parameter) > 0:
+        settings.TESTABLE_PARAMETER = check_parameter
+
       if len(settings.TEST_PARAMETER) > 0:
         if check_parameter in settings.TEST_PARAMETER:
           # Check for session file 
@@ -259,7 +277,7 @@ def get_request(url, http_request_method, filename, delay):
         injection_proccess(url, check_parameter, http_request_method, filename, delay)
   
   # Enable Cookie Injection
-  if menu.options.level > 1 and menu.options.cookie:
+  if menu.options.level > settings.DEFAULT_INJECTION_LEVEL and menu.options.cookie:
     settings.COOKIE_INJECTION = True
 
 """
@@ -335,16 +353,18 @@ def perform_checks(url, filename):
     http_request_method = "POST"
 
   if menu.options.shellshock:
-    menu.options.level = 3
+    menu.options.level = settings.HTTP_HEADER_INJECTION_LEVEL
+  else:
+    check_for_stored_levels(url, http_request_method)
 
   # Check for stored injections on User-agent / Referer headers (if level > 2).
-  if menu.options.level >= 3:
+  if menu.options.level >= settings.HTTP_HEADER_INJECTION_LEVEL:
     if settings.INJECTED_HTTP_HEADER == False :
       check_parameter = ""
       stored_http_header_injection(url, check_parameter, http_request_method, filename, delay)
   else:
     # Enable Cookie Injection
-    if menu.options.level > 1:
+    if menu.options.level > settings.DEFAULT_INJECTION_LEVEL:
       if menu.options.cookie:
         cookie_injection(url, http_request_method, filename, delay)
       else:
@@ -379,14 +399,15 @@ def do_check(url, filename):
 
   if perform_checks(url,filename) == False:
     scan_level = menu.options.level
-    while scan_level < 3 and settings.LOAD_SESSION == None:
+
+    while scan_level < settings.HTTP_HEADER_INJECTION_LEVEL and settings.LOAD_SESSION == None:
       question_msg = "Do you want to increase to '--level=" + str(scan_level + 1) 
       question_msg += "' in order to perform more tests? [Y/n/q] > "
       sys.stdout.write(settings.print_question_msg(question_msg))
       next_level = sys.stdin.readline().replace("\n","").lower()
       if next_level in settings.CHOICE_YES:
         menu.options.level = int(menu.options.level + scan_level)
-        if perform_checks(url,filename) == False:
+        if perform_checks(url,filename) == False and scan_level < settings.HTTP_HEADER_INJECTION_LEVEL :
           scan_level = scan_level + 1
         else:
           break  
@@ -412,7 +433,7 @@ def do_check(url, filename):
         err_msg += " Try to use the option '--alter-shell'"
       else:
         err_msg += " Try to remove the option '--alter-shell'"
-      if menu.options.level < 3 :
+      if menu.options.level < settings.HTTP_HEADER_INJECTION_LEVEL :
         err_msg += " and/or try to increase '--level' values to perform"
         err_msg += " more tests (i.e 'User-Agent', 'Referer', 'Cookie' etc)"
       err_msg += "."

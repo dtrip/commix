@@ -311,7 +311,7 @@ def fb_injection_handler(url, delay, filename, http_request_method, url_time_res
                   raise urllib2.HTTPError(url, 404, 'Error', {}, None)
 
               except urllib2.HTTPError, e:
-                  if e.getcode() == 404:
+                  if str(e.getcode()) == settings.NOT_FOUND_ERROR:
                     percent = ((i*100)/total)
                     float_percent = "{0:.1f}".format(round(((i*100)/(total*1.0)),2))
 
@@ -376,12 +376,12 @@ def fb_injection_handler(url, delay, filename, http_request_method, url_time_res
                       else:
                         raise
                     
-                  elif e.getcode() == 401:
+                  elif str(e.getcode()) == settings.UNAUTHORIZED_ERROR:
                     err_msg = "Authorization required!"
                     print settings.print_critical_msg(err_msg) + "\n"
                     sys.exit(0)
                     
-                  elif e.getcode() == 403:
+                  elif str(e.getcode()) == settings.FORBIDDEN_ERROR:
                     err_msg = "You don't have permission to access this page."
                     print settings.print_critical_msg(err_msg) + "\n"
                     sys.exit(0)
@@ -475,7 +475,7 @@ def fb_injection_handler(url, delay, filename, http_request_method, url_time_res
             print settings.SUB_CONTENT_SIGN + "Payload: " + re.sub("%20", " ", payload.replace("\n", "\\n")) + Style.RESET_ALL
             # Export session
             if not settings.LOAD_SESSION:
-              session_handler.injection_point_importation(url, technique, injection_type, separator, shell[0], vuln_parameter, prefix, suffix, TAG, alter_shell, payload, http_request_method, url_time_response=0, delay=0, how_long=0, output_length=0, is_vulnerable="True")
+              session_handler.injection_point_importation(url, technique, injection_type, separator, shell[0], vuln_parameter, prefix, suffix, TAG, alter_shell, payload, http_request_method, url_time_response=0, delay=0, how_long=0, output_length=0, is_vulnerable=menu.options.level)
             else:
               whitespace = settings.WHITESPACE[0]
               settings.LOAD_SESSION = False 

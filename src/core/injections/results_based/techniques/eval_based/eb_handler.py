@@ -265,7 +265,7 @@ def eb_injection_handler(url, delay, filename, http_request_method):
             logs.update_payload(filename, counter, payload) 
             counter = counter + 1
 
-            if not settings.VERBOSITY_LEVEL >= 1 and not settings.LOAD_SESSION:
+            if not settings.LOAD_SESSION:
               print ""
 
             # Print the findings to terminal.
@@ -279,7 +279,7 @@ def eb_injection_handler(url, delay, filename, http_request_method):
             print settings.SUB_CONTENT_SIGN + "Payload: " + re.sub("%20", " ", payload) + Style.RESET_ALL
             # Export session
             if not settings.LOAD_SESSION:
-              session_handler.injection_point_importation(url, technique, injection_type, separator, shell[0], vuln_parameter, prefix, suffix, TAG, alter_shell, payload, http_request_method, url_time_response=0, delay=0, how_long=0, output_length=0, is_vulnerable="True")
+              session_handler.injection_point_importation(url, technique, injection_type, separator, shell[0], vuln_parameter, prefix, suffix, TAG, alter_shell, payload, http_request_method, url_time_response=0, delay=0, how_long=0, output_length=0, is_vulnerable=menu.options.level)
             else:
               whitespace = settings.WHITESPACE[0]
               settings.LOAD_SESSION = False 
@@ -441,8 +441,8 @@ def eb_injection_handler(url, delay, filename, http_request_method):
                       #if shell:
                       if shell != "":
                         shell = "".join(str(p) for p in shell)
-                        if settings.VERBOSITY_LEVEL >= 1:
-                          print ""
+                        # if settings.VERBOSITY_LEVEL >= 1:
+                        #   print ""
                         print "\n" + Fore.GREEN + Style.BRIGHT + shell + Style.RESET_ALL + "\n"
                       else:
                         err_msg = "The '" + cmd + "' command, does not return any output."

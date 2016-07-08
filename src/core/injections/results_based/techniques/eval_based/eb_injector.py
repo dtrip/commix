@@ -112,6 +112,8 @@ def warning_detection(url, http_request_method):
       err_msg = ""
       if "eval()'d code" in html_data:
         err_msg = "'eval()'"
+      if "Warning: create_function():" in html_data:
+        err_msg = "create_function()"
       if "Cannot execute a blank command in" in html_data:
         err_msg = "execution of a blank command,"
       if "sh: command substitution:" in html_data:
@@ -268,10 +270,10 @@ def injection(separator, TAG, cmd, prefix, suffix, whitespace, http_request_meth
     if tries < (settings.FAILED_TRIES / 2):
       response = check_injection(separator, TAG, cmd, prefix, suffix, whitespace, http_request_method, url, vuln_parameter, alter_shell, filename)
       tries = tries + 1
-  else:
-    err_msg = "Something went wrong, the request has failed (" + str(tries) + ") times continuously."
-    sys.stdout.write(settings.print_critical_msg(err_msg)+"\n")
-    sys.exit(0)
+    else:
+      err_msg = "Something went wrong, the request has failed (" + str(tries) + ") times continuously."
+      sys.stdout.write(settings.print_critical_msg(err_msg)+"\n")
+      sys.exit(0)
 
   return response
 
