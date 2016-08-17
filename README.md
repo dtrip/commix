@@ -1,6 +1,6 @@
 ![Logo](http://i.imgur.com/xcNYrfv.png)
 
-[![Version 1.0](https://img.shields.io/badge/Version-1.0-green.svg)](https://github.com/stasinopoulos/commix/releases/tag/v1.0-20160614)
+[![Version 1.2](https://img.shields.io/badge/Version-1.2-green.svg)](https://github.com/stasinopoulos/commix/releases/tag/v1.2-20160812)
 [![Python 2.6-2.7](https://img.shields.io/badge/Python-2.6--2.7-yellow.svg)](http://www.python.org/download/)
 [![GPLv3 License](https://img.shields.io/badge/License-GPLv3-red.svg)](https://github.com/stasinopoulos/commix/blob/master/readme/COPYING)
 [![Twitter](https://img.shields.io/badge/Twitter-@commixproject-blue.svg)](http://www.twitter.com/commixproject)
@@ -26,14 +26,16 @@ Download commix by cloning the Git repository:
 Commix comes packaged on the **official repositories** of the following Linux distributions, so you can use the **package manager** to install it!
 
 - [ArchAssault](https://archassault.org/)
-- [BlackArch](http://blackarch.org/)
+- [BlackArch Linux](http://blackarch.org/)
 - [BackBox](https://backbox.org/)
 - [Kali Linux](https://www.kali.org/)
-- [Weakerthan](http://www.weaknetlabs.com/)
+- [Parrot Security OS](https://www.parrotsec.org/)
+- [Weakerthan Linux](http://www.weaknetlabs.com/)
 
 Commix also comes **as a plugin**, on the following penetration testing frameworks:
 
-- [The Penetration Testers Framework (PTF)](https://github.com/trustedsec/ptf)
+- [TrustedSec's Penetration Testers Framework (PTF)](https://github.com/trustedsec/ptf)
+- [OWASP Offensive Web Testing Framework (OWTF)](https://github.com/owtf/owtf)
 - [CTF-Tools](https://github.com/zardus/ctf-tools)
 - [PentestBox](https://tools.pentestbox.com/)
 - [PenBox](https://github.com/x3omdax/PenBox)

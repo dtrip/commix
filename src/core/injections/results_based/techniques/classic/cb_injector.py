@@ -73,6 +73,7 @@ def injection_test(payload, http_request_method, url):
     
     # Check if its not specified the 'INJECT_HERE' tag
     parameter = parameters.do_POST_check(parameter)
+    parameter = parameter.replace("+","%2B")
 
     # Define the POST data  
     if settings.IS_JSON == False:
@@ -207,7 +208,7 @@ def injection(separator, TAG, cmd, prefix, suffix, whitespace, http_request_meth
         
         # Check if its not specified the 'INJECT_HERE' tag
         parameter = parameters.do_POST_check(parameter)
-        
+        parameter = parameter.replace("+","%2B")
         # Define the POST data  
         if settings.IS_JSON == False:
           data = re.sub(settings.INJECT_TAG, payload, parameter)
@@ -246,21 +247,41 @@ def injection(separator, TAG, cmd, prefix, suffix, whitespace, http_request_meth
 The command execution results.
 """
 def injection_results(response, TAG, cmd):
+
+  false_result = False
   # Grab execution results
   html_data = response.read()
-  shell = re.findall(r"" + TAG + TAG + "(.*)" + TAG + TAG + "", html_data, re.S)
-  if len(shell) > 1:
-    shell = shell[0] 
-  else:
-    try:
-      # Clean junks
-      shell = [backslash.replace("\/","/") for backslash in shell]
-      shell = [tags.replace(TAG + TAG , "") for tags in shell]
-    except UnicodeDecodeError:
-      pass
-    if settings.TARGET_OS == "win" and menu.options.alter_shell: 
-      shell = [newline.replace("\n"," ") for newline in shell]
+  # cleanup string / unescape html to string
+  html_data = urllib2.unquote(html_data).decode(settings.DEFAULT_CHARSET)
+  html_data = HTMLParser.HTMLParser().unescape(html_data).encode(sys.getfilesystemencoding())
+
+  for end_line in settings.END_LINE:
+    if end_line in html_data:
+      html_data = html_data.replace(end_line, " ")
+      break
+  shell = re.findall(r"" + TAG + TAG + "(.*)" + TAG + TAG + " ", html_data)
+  if not shell:
+    shell = re.findall(r"" + TAG + TAG + "(.*)" + TAG + TAG + "", html_data)
+  if not shell:
+    return shell
+  try:
+    if TAG in shell:
+      shell = re.findall(r"" + "(.*)" + TAG + TAG, shell)
+    # Clear junks
+    shell = [tags.replace(TAG + TAG , " ") for tags in shell]
+    shell = [backslash.replace("\/","/") for backslash in shell]
+  except UnicodeDecodeError:
+    pass
+  if settings.TARGET_OS == "win":
+    if menu.options.alter_shell: 
       shell = [right_space.rstrip() for right_space in shell]
       shell = [left_space.lstrip() for left_space in shell]
+      if "<<<<" in shell[0]:
+        false_result = True
+    else:
+      if shell[0] == "%i" :
+        false_result = True  
+  if false_result:
+    shell = ""
+    
   return shell
-

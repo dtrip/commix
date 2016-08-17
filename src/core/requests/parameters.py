@@ -19,6 +19,8 @@ import os
 import sys
 import json
 
+from urlparse import urlparse
+
 from src.utils import menu
 from src.utils import settings
 from src.core.injections.controller import checks
@@ -29,11 +31,9 @@ Get the URL part of the defined URL.
 """
 def get_url_part(url):
   
-  # Find the host part
-  url_part = url.split("?")[0]
-  # Remove "/" if "/?" in url
-  if url_part.endswith("/"):
-    url_part = url_part[:-len("/")]
+  # Find the URL part (scheme:[//host[:port]][/]path)
+  o = urlparse(url)
+  url_part = o.scheme + "://" + o.netloc + o.path
 
   return url_part
 
@@ -178,9 +178,6 @@ Check if the 'INJECT_HERE' tag, is specified on POST Requests.
 """
 def do_POST_check(parameter):
 
-    # Do replacement with the 'INJECT_HERE' tag, if the wildcard char is provided.
-  parameter = checks.wildcard_character(parameter)
-
   # Check if valid JSON
   def is_JSON_check(parameter):
     try:
@@ -201,6 +198,9 @@ def do_POST_check(parameter):
       return False
     else:  
       return True
+
+  # Do replacement with the 'INJECT_HERE' tag, if the wildcard char is provided.
+  parameter = checks.wildcard_character(parameter).replace("'","\"")
 
   # Check if JSON Object.
   if is_JSON_check(parameter):

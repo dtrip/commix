@@ -88,7 +88,7 @@ def cb_injection_handler(url, delay, filename, http_request_method):
     for prefix in settings.PREFIXES:
       for suffix in settings.SUFFIXES:
         for separator in settings.SEPARATORS:
-          
+
           # If a previous session is available.
           if settings.LOAD_SESSION and session_handler.notification(url, technique):
             url, technique, injection_type, separator, shell, vuln_parameter, prefix, suffix, TAG, alter_shell, payload, http_request_method, url_time_response, delay, how_long, output_length, is_vulnerable = session_handler.injection_point_exportation(url, http_request_method)
@@ -398,7 +398,7 @@ def cb_injection_handler(url, delay, filename, http_request_method):
                           shell = cb_injector.injection_results(response, TAG, cmd)
                           if settings.VERBOSITY_LEVEL >= 1:
                             print ""
-                          err_msg = "The reverse TCP connection has been failed!"
+                          err_msg = "The reverse TCP connection has failed!"
                           print settings.print_critical_msg(err_msg)
                       else:
                         pass

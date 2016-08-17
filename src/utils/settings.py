@@ -95,14 +95,13 @@ APPLICATION = "commix"
 DESCRIPTION_FULL = "Automated All-in-One OS Command Injection and Exploitation Tool"
 DESCRIPTION = "The command injection exploiter"
 AUTHOR  = "Anastasios Stasinopoulos"
-MAJOR = "1"
-MINOR = "1"
-COMMIT_ID = "22"
-VERSION = MAJOR + "." + MINOR
+VERSION_NUM = "1.3.2"
 STABLE_VERSION = False
-if not STABLE_VERSION:
-  VERSION = MAJOR + "." + MINOR + "." + COMMIT_ID
-YEAR    = "2014-2016"
+if STABLE_VERSION:
+  VERSION = VERSION_NUM[:3]
+else:
+  VERSION = VERSION_NUM + "-dev"
+YEAR = "2014-2016"
 AUTHOR_TWITTER = "@ancst" 
 APPLICATION_TWITTER = "@commixproject" 
 
@@ -186,7 +185,7 @@ PREFIXES = ["", " ", "'", "\"", "&", "%26", "|", "%7C", "%27", "%22"]
 SEPARATORS = [";", "%3B", "&", "%26", "&&", "%26%26", "|", "%7C", "||", "%7C%7C", "%0a"]
 
 # The command injection suffixes.
-SUFFIXES = ["", "'", "\"", "#", "//", "\\\\", "&", "%26", "|", "%7C", "%27", "%22", "%5C%5C", "%2F%2F"]
+SUFFIXES = ["", "'", "\"", "#", "//", "\\\\", "&&", "%26%26", "|", "%7C", "%27", "%22", "%5C%5C", "%2F%2F"]
 
 # Bad combination of prefix and separator
 JUNK_COMBINATION = ["&&&", "|||", "|&&", "&|", "&;", "|;", "%7C;", "%26;", "%7C&"]
@@ -195,10 +194,10 @@ JUNK_COMBINATION = ["&&&", "|||", "|&&", "&|", "&;", "|;", "%7C;", "%26;", "%7C&
 EXECUTION_FUNCTIONS = ["exec", "system", "shell_exec", "passthru", "proc_open", "popen"]
 
 # The code injection prefixes.
-EVAL_PREFIXES = ["", "'", ")", "')", "\")", "\".", "'.", ");}", "');}", "\");}"]
+EVAL_PREFIXES = ["", ";", "'", ")", "')", "\")", "\".", "'.", ");}", "');}", "\");}"]
 
 # The code injection separators.
-EVAL_SEPARATORS = ["", ";", "%0a", "\\\\n"]
+EVAL_SEPARATORS = ["", "%0a", "\\\\n"]
 
 # The code injection suffixes.
 EVAL_SUFFIXES = ["", "\\\\", "//", "#", ".\"", ".'", ")}"]
@@ -360,6 +359,9 @@ PARAMETER_DELIMITER = "&"
 # Web-page Charset
 CHARSET = ""
 
+# Page default charset
+DEFAULT_CHARSET = "utf-8"
+
 # Character Sets List (basic)
 CHARSET_LIST = [
         "big5",
@@ -410,6 +412,13 @@ SERVER_OS_BANNERS = [
     "unix"
 ]
 
+TARGET_APPLICATION = ""
+# Unsupported target application(s) [1]
+# [1] https://github.com/stasinopoulos/commix/wiki/Target-applications
+UNSUPPORTED_TARGET_APPLICATION = [ 
+    "JSP"
+]
+
 REVERSE_TCP = False
 
 # Injection logs report
@@ -439,10 +448,11 @@ TFB_DECIMAL = False
 IGNORE_ERR_MSG = False
 
 # Windows Python (2.7) installed directory.
-WIN_PYTHON_DIR = "C:\\Python27\\"
+WIN_PYTHON_DIR = "C:\\Python27\\python.exe"
+USER_DEFINED_PYTHON_DIR = False
 
 # Windows PHP installed directory.
-WIN_PHP_DIR = "C:\\xampp\\php\\"
+WIN_PHP_DIR = "C:\\xampp\\php\\php.exe"
 
 # Comment out
 WIN_COMMENT = "REM"
@@ -492,6 +502,9 @@ INJECTION_CHECKER = False
 # List of pages / scripts potentially vulnerable to Shellshock
 CGI_SCRIPTS = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'txt')) + "/" + "shocker-cgi_list.txt"
 
+# Metasploit Framework Path
+METASPLOIT_PATH = "/usr/share/metasploit-framework/"
+
 # Supported HTTP Authentication types
 SUPPORTED_HTTP_AUTH_TYPES = [ "basic", "digest" ]
 
@@ -502,7 +515,8 @@ HTTP_HEADERS = [ "useragent", "referer" ]
 TAMPER_SCRIPTS = {
                   "space2ifs": False,
                   "base64encode": False,
-                  "space2plus": False
+                  "space2plus": False,
+                  "space2tab": False
                  }
 
 # HTTP Errors
@@ -511,5 +525,11 @@ FORBIDDEN_ERROR = "403"
 NOT_FOUND_ERROR = "404"
 NOT_ACCEPTABLE_ERROR = "406"
 INTERNAL_SERVER_ERROR = "500"
+
+# End line
+END_LINE = ["\r", "\n", "\r\n"]
+
+# Check for updates on start up.
+CHECK_FOR_UPDATES_ON_START = True
 
 #eof

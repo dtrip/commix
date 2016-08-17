@@ -1,4 +1,21 @@
-## Version 1.1 (upcoming)
+## Version 1.3 (upcoming)
+Fixed: Minor improvement in Shellshock module for finding RCE results on page's response.
+
+## Version 1.2 (2016-08-12)
+* Added: The ability for setting custom (PHP / Python) working directory.
+* Fixed: License file minor inaccurancy issue has been fixed.
+* Revised: The Windows-based payloads for every supported technique, had been shortly revised.
+* Revised: The dynamic code evaluation ("eval-based") technique has been shortly revised.
+* Added: New tamper script "space2tab.py" that replaces every space (" ") with plus ("%09").
+* Added: The ability for generating powershell attack vectors via TrustedSec's Magic Unicorn.
+* Added: The ability for checking if there is a new version available.
+* Added: The ability for target application extension recognition (i.e PHP, ASP etc).
+* Fixed: Minor improvement for finding the URL part (i.e scheme:[//host[:port]][/]path).
+* Fixed: Minor fix for conflicted shells (i.e regular, alternative) from session file.
+
+## Version 1.1 (2016-07-14)
+* Added: The ".gitignore" file has been added.
+* Added: Support for injections against ASP.NET applications.
 * Added: Support for warning detection regarding "create_function()" function.
 * Fixed: Minor improvent of the HTTP server for "--file-upload" option.
 * Fixed: Minor fix for conflicted executed commands from session file in HTTP Headers.

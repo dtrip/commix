@@ -35,6 +35,9 @@ else:
   # Handle target environment that doesn't support HTTPS verification
   ssl._create_default_https_context = _create_unverified_https_context
 
+from urlparse import urlparse
+from os.path import splitext
+
 from src.utils import menu
 from src.utils import logs
 from src.utils import update
@@ -85,7 +88,6 @@ def main():
     # Check if defined "--update" option.        
     if menu.options.update:
       update.updater()
-      sys.exit(0)
         
     # Check if defined "--install" option.        
     if menu.options.install:
@@ -131,6 +133,10 @@ def main():
       for i in range(0,len(settings.TEST_PARAMETER)):
         if "=" in settings.TEST_PARAMETER[i]:
           settings.TEST_PARAMETER[i] = settings.TEST_PARAMETER[i].split("=")[0]
+    
+    # Check if ".git" exists and check for updated version!
+    if os.path.isdir("./.git") and settings.CHECK_FOR_UPDATES_ON_START:
+      update.check_for_update()
 
     # Check if defined character used for splitting parameter values.
     if menu.options.pdel:
@@ -329,6 +335,7 @@ def main():
             if menu.options.os and checks.user_defined_os():
               user_defined_os = settings.TARGET_OS
 
+            # Procedure for target OS identification.
             for i in range(0,len(settings.SERVER_OS_BANNERS)):
               if settings.SERVER_OS_BANNERS[i].lower() in server_banner.lower():
                 found_os_server = True
@@ -351,6 +358,7 @@ def main():
                     if not checks.identified_os():
                       settings.TARGET_OS = user_defined_os
 
+            # Procedure for target server identification.
             found_server_banner = False
             if settings.VERBOSITY_LEVEL >= 1:
               info_msg = "Identifying the target server... " 
@@ -362,11 +370,12 @@ def main():
                 if settings.VERBOSITY_LEVEL >= 1:
                   print "[ " + Fore.GREEN + "SUCCEED" + Style.RESET_ALL + " ]"
                 if settings.VERBOSITY_LEVEL >= 1:
-                  success_msg = "The server was identified as " 
+                  success_msg = "The target server was identified as " 
                   success_msg += server_banner + Style.RESET_ALL + "."
                   print settings.print_success_msg(success_msg)
                 settings.SERVER_BANNER = server_banner
                 found_server_banner = True
+
                 # Set up default root paths
                 if settings.SERVER_BANNERS[i].lower() == "apache":
                   if settings.TARGET_OS == "win":
@@ -382,9 +391,39 @@ def main():
             if not found_server_banner:
               if settings.VERBOSITY_LEVEL >= 1:
                 print "[ " + Fore.RED + "FAILED" + Style.RESET_ALL + " ]"
-              warn_msg = "Heuristics have failed to identify server."
+              warn_msg = "Heuristics have failed to identify target server."
               print settings.print_warning_msg(warn_msg)
+
+            # Procedure for target application identification
+            found_application_extension = False
+            if settings.VERBOSITY_LEVEL >= 1:
+              info_msg = "Identifying the target application ... " 
+              sys.stdout.write(settings.print_info_msg(info_msg))
+              sys.stdout.flush()
+            root, application_extension = splitext(urlparse(url).path)
+            settings.TARGET_APPLICATION = application_extension[1:].upper()
             
+            if settings.TARGET_APPLICATION:
+              found_application_extension = True
+              if settings.VERBOSITY_LEVEL >= 1:
+                print "[ " + Fore.GREEN + "SUCCEED" + Style.RESET_ALL + " ]"           
+                success_msg = "The target application was identified as " 
+                success_msg += settings.TARGET_APPLICATION + Style.RESET_ALL + "."
+                print settings.print_success_msg(success_msg)
+
+              # Check for unsupported target applications
+              for i in range(0,len(settings.UNSUPPORTED_TARGET_APPLICATION)):
+                if settings.TARGET_APPLICATION.lower() in settings.UNSUPPORTED_TARGET_APPLICATION[i].lower():
+                  err_msg = settings.TARGET_APPLICATION + " exploitation is not yet supported."  
+                  print settings.print_critical_msg(err_msg)
+                  raise SystemExit()
+
+            if not found_application_extension:
+              if settings.VERBOSITY_LEVEL >= 1:
+                print "[ " + Fore.RED + "FAILED" + Style.RESET_ALL + " ]"
+              warn_msg = "Heuristics have failed to identify target application."
+              print settings.print_warning_msg(warn_msg)
+
             # Load tamper scripts
             if menu.options.tamper:
               checks.tamper_scripts()
@@ -394,6 +433,29 @@ def main():
 
             if menu.options.is_admin or menu.options.is_root and not menu.options.current_user:
               menu.options.current_user = True
+
+            # Define Python working directory.
+            if settings.TARGET_OS == "win" and menu.options.alter_shell:
+              while True:
+                question_msg = "Do you want to use '" + settings.WIN_PYTHON_DIR 
+                question_msg += "' as Python working directory on the target host? [Y/n] > "
+                sys.stdout.write(settings.print_question_msg(question_msg))
+                python_dir = sys.stdin.readline().replace("\n","").lower()
+                if python_dir in settings.CHOICE_YES:
+                  break
+                elif python_dir in settings.CHOICE_NO:
+                  question_msg = "Please provide a custom working directory for Python (e.g. '" 
+                  question_msg += settings.WIN_PYTHON_DIR + "') > "
+                  sys.stdout.write(settings.print_question_msg(question_msg))
+                  settings.WIN_PYTHON_DIR = sys.stdin.readline().replace("\n","").lower()
+                  break
+                else:
+                  if python_dir == "":
+                    python_dir = "enter"
+                  err_msg = "'" + python_dir + "' is not a valid answer."  
+                  print settings.print_error_msg(err_msg)
+                  pass
+              settings.USER_DEFINED_PYTHON_DIR = True
 
             # Check for wrong flags.
             if settings.TARGET_OS == "win":
@@ -522,8 +584,8 @@ def main():
                   while True:
                     question_msg = "Do you want to perform a dictionary-based attack? [Y/n/q] > "
                     sys.stdout.write(settings.print_question_msg(question_msg))
-                    crack_creds = sys.stdin.readline().replace("\n","").lower()
-                    if crack_creds in settings.CHOICE_YES:
+                    do_update = sys.stdin.readline().replace("\n","").lower()
+                    if do_update in settings.CHOICE_YES:
                       auth_creds = authentication.http_auth_cracker(url, realm)
                       if auth_creds != False:
                         menu.options.auth_cred = auth_creds
@@ -531,14 +593,14 @@ def main():
                         break
                       else:
                         sys.exit(0)
-                    elif crack_creds in settings.CHOICE_NO:
+                    elif do_update in settings.CHOICE_NO:
                       checks.http_auth_err_msg()
-                    elif crack_creds in settings.CHOICE_QUIT:
+                    elif do_update in settings.CHOICE_QUIT:
                       sys.exit(0)
                     else:
-                      if crack_creds == "":
-                        crack_creds = "enter"
-                      err_msg = "'" + crack_creds + "' is not a valid answer."  
+                      if do_update == "":
+                        do_update = "enter"
+                      err_msg = "'" + do_update + "' is not a valid answer."  
                       print settings.print_error_msg(err_msg)
                       pass
 
@@ -555,8 +617,8 @@ def main():
                   while True:
                     question_msg = "Do you want to perform a dictionary-based attack? [Y/n/q] > "
                     sys.stdout.write(settings.print_question_msg(question_msg))
-                    crack_creds = sys.stdin.readline().replace("\n","").lower()
-                    if crack_creds in settings.CHOICE_YES:
+                    do_update = sys.stdin.readline().replace("\n","").lower()
+                    if do_update in settings.CHOICE_YES:
                       auth_creds = authentication.http_auth_cracker(url, realm)
                       if auth_creds != False:
                         menu.options.auth_cred = auth_creds
@@ -564,14 +626,14 @@ def main():
                         break
                       else:
                         sys.exit(0)
-                    elif crack_creds in settings.CHOICE_NO:
+                    elif do_update in settings.CHOICE_NO:
                       checks.http_auth_err_msg()
-                    elif crack_creds in settings.CHOICE_QUIT:
+                    elif do_update in settings.CHOICE_QUIT:
                       sys.exit(0)
                     else:
-                      if crack_creds == "":
-                        crack_creds = "enter"
-                      err_msg = "'" + crack_creds + "' is not a valid answer."  
+                      if do_update == "":
+                        do_update = "enter"
+                      err_msg = "'" + do_update + "' is not a valid answer."  
                       print settings.print_error_msg(err_msg)
                       pass
                   else:   

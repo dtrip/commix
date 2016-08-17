@@ -136,7 +136,7 @@ def eb_injection_handler(url, delay, filename, http_request_method):
               # Fixation for specific payload.
               if ")%3B" + urllib.quote(")}") in payload:
                 payload = payload.replace(")%3B" + urllib.quote(")}"), ")" + urllib.quote(")}"))
-              payload = payload +  TAG + ""
+                #payload = payload + TAG + ""
 
               # Whitespace fixation
               payload = re.sub(" ", whitespace, payload)
@@ -290,7 +290,7 @@ def eb_injection_handler(url, delay, filename, http_request_method):
                 question_msg = "Do you want to enumerate again? [Y/n/q] > "
                 enumerate_again = raw_input("\n" + settings.print_question_msg(question_msg)).lower()
                 if enumerate_again in settings.CHOICE_YES:
-                  eb_enumeration.do_check(separator, TAG, prefix, suffix, http_request_method, url, vuln_parameter, alter_shell, filename)
+                  eb_enumeration.do_check(separator, TAG, prefix, suffix, whitespace, http_request_method, url, vuln_parameter, alter_shell, filename)
                   print ""
                   break
                 elif enumerate_again in settings.CHOICE_NO: 
@@ -306,7 +306,7 @@ def eb_injection_handler(url, delay, filename, http_request_method):
 
             else:
               if menu.enumeration_options():
-                eb_enumeration.do_check(separator, TAG, prefix, suffix, http_request_method, url, vuln_parameter, alter_shell, filename)
+                eb_enumeration.do_check(separator, TAG, prefix, suffix, whitespace, http_request_method, url, vuln_parameter, alter_shell, filename)
             
             if not menu.file_access_options() and not menu.options.os_cmd:
               print ""
@@ -320,7 +320,7 @@ def eb_injection_handler(url, delay, filename, http_request_method):
                 sys.stdout.write(settings.print_question_msg(question_msg))
                 file_access_again = sys.stdin.readline().replace("\n","").lower()
                 if file_access_again in settings.CHOICE_YES:
-                  eb_file_access.do_check(separator, TAG, prefix, suffix, http_request_method, url, vuln_parameter, alter_shell, filename)
+                  eb_file_access.do_check(separator, TAG, prefix, suffix, whitespace, http_request_method, url, vuln_parameter, alter_shell, filename)
                   print ""
                   break
                 elif file_access_again in settings.CHOICE_NO: 
@@ -337,14 +337,14 @@ def eb_injection_handler(url, delay, filename, http_request_method):
               if menu.file_access_options():
                 if not menu.enumeration_options():
                   print ""
-                eb_file_access.do_check(separator, TAG, prefix, suffix, http_request_method, url, vuln_parameter, alter_shell, filename)
+                eb_file_access.do_check(separator, TAG, prefix, suffix, whitespace, http_request_method, url, vuln_parameter, alter_shell, filename)
                 print ""
 
             # Check if defined single cmd.
             if menu.options.os_cmd:
               if not menu.file_access_options():
                 print ""
-              eb_enumeration.single_os_cmd_exec(separator, TAG, prefix, suffix, http_request_method, url, vuln_parameter, alter_shell, filename)
+              eb_enumeration.single_os_cmd_exec(separator, TAG, prefix, suffix, whitespace, http_request_method, url, vuln_parameter, alter_shell, filename)
 
             # Pseudo-Terminal shell
             go_back = False
@@ -415,7 +415,7 @@ def eb_injection_handler(url, delay, filename, http_request_method):
                           shell = eb_injector.injection_results(response, TAG, cmd)
                           if settings.VERBOSITY_LEVEL >= 1:
                             print ""
-                          err_msg = "The reverse TCP connection has been failed!"
+                          err_msg = "The reverse TCP connection has failed!"
                           print settings.print_critical_msg(err_msg)
                       else:
                         pass

